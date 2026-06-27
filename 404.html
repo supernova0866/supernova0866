@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>404 — nova</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --dim: rgba(255,255,255,0.35);
+    --dimmer: rgba(255,255,255,0.12);
+    --font-sans: 'Inter', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #000; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+  * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) #000; }
+
+  body {
+    background: #000;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .top-label {
+    position: fixed;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .18em;
+    color: var(--dim);
+    text-transform: lowercase;
+    white-space: nowrap;
+    z-index: 1;
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .code {
+    font-family: var(--font-sans);
+    font-size: clamp(7rem, 22vw, 16rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: #fff;
+    user-select: none;
+  }
+
+  .message {
+    margin-top: 1.25rem;
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: var(--dim);
+    max-width: 320px;
+    line-height: 1.65;
+  }
+
+  .back {
+    margin-top: 2rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: #fff;
+    text-decoration: none;
+    border: 1px solid var(--dimmer);
+    border-radius: 100px;
+    padding: 8px 22px;
+    letter-spacing: .06em;
+    transition: border-color .2s, background .2s;
+  }
+  .back:hover {
+    border-color: rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.04);
+  }
+</style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <p class="top-label">nova · 404</p>
+
+  <div class="content">
+    <div class="code">404</div>
+    <p class="message">you wandered somewhere that doesn't exist.<br>classic move, honestly.</p>
+    <a class="back" href="/">← take me home</a>
+  </div>
+
+  <script src="/nova/devtools.js"></script>
+  <script src="/js/oneko.js" data-cat="/js/oneko.gif"></script>
+  <script src="/js/cursor.js"></script>
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    let W, H;
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const COUNT = 55;
+    const particles = [];
+
+    function rand(a, b) { return a + Math.random() * (b - a); }
+
+    class Particle {
+      constructor() { this.spawn(true); }
+
+      spawn(scatter) {
+        // always place inside the viewport — no edge-spawning so nothing flies in fast
+        this.x = rand(0, W);
+        this.y = rand(0, H);
+        // slow random drift; stagger life so they don't all fade together on load
+        const angle = rand(0, Math.PI * 2);
+        const speed = rand(0.05, 0.14);
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.size  = rand(8, 13);
+        this.alpha = rand(0.02, 0.055);
+        this.maxLife = rand(400, 750);
+        this.life    = scatter ? rand(0, this.maxLife * 0.9) : 0;
+      }
+
+      update(dt) {
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.life += dt;
+        const t = Math.min(this.life / this.maxLife, 1);
+        const fade = t < 0.15 ? t / 0.15 : t > 0.85 ? (1 - t) / 0.15 : 1;
+        this.currentAlpha = this.alpha * Math.max(0, fade);
+        if (this.life >= this.maxLife) this.spawn(false);
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.currentAlpha;
+        ctx.font = `400 ${this.size}px 'Inter', sans-serif`;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('404', this.x, this.y);
+        ctx.restore();
+      }
+    }
+
+    for (let i = 0; i < COUNT; i++) {
+      particles.push(new Particle());
+    }
+
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.min((now - last) / 16.67, 3); // normalise to 60fps; cap spike
+      last = now;
+      ctx.clearRect(0, 0, W, H);
+      for (const p of particles) {
+        p.update(dt);
+        p.draw();
+      }
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
