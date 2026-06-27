@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nova // dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap');
+
+  :root {
+    --black: #000000;
+    --dark-grey: #0a0a0b;
+    --card-bg: rgba(20, 20, 22, 0.6);
+    --white: #f0ede8;
+    --dim: rgba(255,255,255,0.4);
+    --dimmer: rgba(255,255,255,0.1);
+    --border: rgba(255,255,255,0.06);
+    --glow-soft: 0 0 18px rgba(255,255,255,0.05);
+    --accent-red: #ff5252;
+    --accent-green: #10b981;
+    --accent-amber: #f59e0b;
+    --font-sans: 'Inter', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--black);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) var(--black);
+  }
+
+  /* ── noise texture overlay ── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9990;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    opacity: .5;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 500;
+  }
+
+  .header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.2rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .brand-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    text-transform: lowercase;
+    text-decoration: none;
+    color: var(--white);
+  }
+
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+
+  .user-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .user-name {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--dim);
+  }
+
+  .btn-logout {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--dim);
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-logout:hover {
+    color: var(--white);
+    border-color: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.04);
+  }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 5vw 6rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  @media (min-width: 900px) {
+    main {
+      grid-template-columns: 2.5fr 1fr;
+    }
+  }
+
+  /* ── cards ── */
+  .card {
+    background: var(--dark-grey);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: var(--glow-soft);
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 1.5rem;
+    text-transform: lowercase;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.75rem;
+  }
+
+  .card-title-mono {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── forms ── */
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (min-width: 600px) {
+    .form-row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    background: rgba(255,255,255,0.01);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    color: var(--white);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.03);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 240px;
+  }
+
+  .textarea-markdown {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .field-help {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: rgba(255,255,255,0.22);
+    margin-top: 0.3rem;
+  }
+
+  /* ── usage tracker ── */
+  .usage-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .usage-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .usage-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+
+  .usage-name {
+    color: var(--white);
+  }
+
+  .usage-stats {
+    color: var(--dim);
+  }
+
+  .usage-bar-bg {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .usage-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  /* color logic classes */
+  .bar-white { background: var(--white); }
+  .bar-amber { background: var(--accent-amber); }
+  .bar-red { background: var(--accent-red); }
+
+  /* ── real-time preview panel ── */
+  .preview-box {
+    background: rgba(255,255,255,0.01);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.25rem;
+    font-size: 13px;
+    color: var(--white);
+    min-height: 60px;
+    white-space: pre-wrap;
+  }
+
+  /* ── notification ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--dark-grey);
+    border: 1px solid var(--border);
+    color: var(--white);
+    padding: 12px 24px;
+    border-radius: 6px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  #toast .toast-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent-green);
+    border-radius: 50%;
+  }
+
+  .btn-primary {
+    background: var(--white);
+    color: var(--black);
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(255,255,255,0.15);
+  }
+
+  /* ── questions list ── */
+  .question-item {
+    background: rgba(255,255,255,0.01);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .question-q {
+    font-weight: 500;
+    color: var(--white);
+    font-size: 13px;
+    margin-bottom: 0.5rem;
+  }
+
+  .question-meta {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--dim);
+    margin-bottom: 0.8rem;
+  }
+
+  .answer-input-container {
+    display: flex;
+    gap: 12px;
+  }
+
+  /* Inline divider matching novamark */
+  .inline-divider {
+    margin: 2rem auto;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.06) 15%, rgba(255,255,255,0.06) 85%, transparent);
+  }
+
+  .status-option-container {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .status-circle-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .status-circle-select.selected {
+    border-color: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.08);
+  }
+
+  .status-circle-select .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-container">
+    <div class="brand-group">
+      <a href="/" class="logo">supernovæ</a>
+      <span class="badge">cms v1.1</span>
+    </div>
+    <div class="user-controls">
+      <span class="user-name" id="user-display">admin@supernova</span>
+      <button class="btn-logout" id="logout-btn">logout</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT COLUMN: EDIT FIELDS -->
+  <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+    <!-- LIVE STATUS AND HEARTBEAT -->
+    <div class="card">
+      <div class="card-title">
+        <span>site presence heartbeat</span>
+        <span class="card-title-mono">real-time sync</span>
+      </div>
+      <div class="form-group">
+        <label>presence state</label>
+        <div class="status-option-container">
+          <div class="status-circle-select" data-status="online">
+            <span class="dot" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
+            online
+          </div>
+          <div class="status-circle-select" data-status="idle">
+            <span class="dot" style="background: #f59e0b; box-shadow: 0 0 6px #f59e0b;"></span>
+            idle
+          </div>
+          <div class="status-circle-select" data-status="do not disturb">
+            <span class="dot" style="background: #ff5252; box-shadow: 0 0 6px #ff5252;"></span>
+            do not disturb
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label>custom status label</label>
+          <input type="text" id="hero-status-text" placeholder="e.g. do not disturb">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label>subtext description</label>
+          <input type="text" id="hero-status-subtext" placeholder="e.g. probably doing nothing.">
+        </div>
+      </div>
+      <div style="margin-top: 1.5rem; text-align: right;">
+        <button class="btn-primary" id="save-status-btn">sync heartbeat</button>
+      </div>
+    </div>
+
+    <!-- SITE FIELDS CONFIG -->
+    <div class="card">
+      <div class="card-title">
+        <span>site configuration fields</span>
+        <span class="card-title-mono">novamark cms</span>
+      </div>
+      
+      <!-- CURRENT PROJECT -->
+      <h3 style="font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--dim); margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 4px;">Current Project</h3>
+      <p style="font-size: 9px; opacity: 0.65; margin-bottom: 1rem; line-height: 1.4;">
+        shown as a full-width card below the four live cards on the now page.
+      </p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>project name</label>
+          <input type="text" id="now-project-name" placeholder="e.g. nova.is-a.dev">
+        </div>
+        <div class="form-group">
+          <label>status tag</label>
+          <input type="text" id="now-project-status" placeholder="e.g. in progress, shipped, on hold">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>short description</label>
+          <input type="text" id="now-project-desc" placeholder="e.g. personal portfolio built from scratch">
+        </div>
+        <div class="form-group">
+          <label>project url (optional)</label>
+          <input type="text" id="now-project-url" placeholder="e.g. https://github.com/you/project">
+        </div>
+      </div>
+
+      <!-- NOW SECTION FALLBACKS -->
+      <h3 style="font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--dim); margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 4px;">Now Playing (Spotify Static Fallback)</h3>
+      <p style="font-size: 9px; opacity: 0.65; margin-bottom: 1rem; line-height: 1.4;">
+        these variables display on the Spotify card if you are not currently listening to anything live.
+      </p>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>spotify fallback text</label>
+          <input type="text" id="now-listening" placeholder="e.g. nothing playing on spotify at the moment.">
+        </div>
+        <div class="form-group">
+          <label>spotify fallback metadata</label>
+          <input type="text" id="now-listening-meta" placeholder="e.g. on repeat">
+        </div>
+      </div>
+
+      <!-- CARD TITLES CUSTOMIZATION -->
+      <h3 style="font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--dim); margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 4px;">Now Cards Customization (Titles & Labels)</h3>
+      <p style="font-size: 9px; opacity: 0.65; margin-bottom: 1rem; line-height: 1.4;">
+        customize the display titles, text labels, and descriptions of each live card on the index page.
+      </p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>status card title</label>
+          <input type="text" id="card-status-title" placeholder="e.g. current status">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>visitors card title</label>
+          <input type="text" id="card-visitors-title" placeholder="e.g. room count">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>visitors card label</label>
+          <input type="text" id="card-visitors-label" placeholder="e.g. visitors">
+        </div>
+        <div class="form-group">
+          <label>visitors card description</label>
+          <input type="text" id="card-visitors-meta" placeholder="e.g. how many people are currently on the site">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>discord card title</label>
+          <input type="text" id="card-discord-title" placeholder="e.g. discord activity">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>discord fallback text (supports NovaMark)</label>
+          <input type="text" id="discord-fallback" placeholder="e.g. got no activity running rn">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>spotify card title</label>
+          <input type="text" id="card-spotify-title" placeholder="e.g. spotify">
+        </div>
+      </div>
+
+      <!-- ABOUT SECTION -->
+      <h3 style="font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--dim); margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 4px;">About Section</h3>
+      
+      <div class="form-group">
+        <label>about body content</label>
+        <textarea id="about-body" class="textarea-markdown" style="min-height: 320px;"></textarea>
+        <div class="field-help">NovaMark: {bold:text}, {highlight:text}, {muted:text}, {link:label|url}, {tag:label}, {divider}, {break}</div>
+        <div style="margin-top: 0.5rem;">
+          <label style="font-size: 9px; opacity: 0.7;">live preview:</label>
+          <div class="preview-box" id="preview-about"></div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 1rem;">
+        <label>about tags (comma-separated)</label>
+        <input type="text" id="about-tags" placeholder="e.g. web dev, open source, design, linux, coffee">
+        <div class="field-help">separate your tags with commas. they will show up as small tags at the bottom of the about section.</div>
+      </div>
+
+      <!-- INTEGRATIONS -->
+      <h3 style="font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--dim); margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 4px;">External integrations</h3>
+      
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label>discord username</label>
+          <input type="text" id="discord-id">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label>last.fm username</label>
+          <input type="text" id="lastfm-username">
+        </div>
+      </div>
+
+      <div style="margin-top: 2rem; text-align: right;">
+        <button class="btn-primary" id="save-config-btn">save CMS variables</button>
+      </div>
+    </div>
+
+    <!-- ANONYMOUS QUESTIONS DESK -->
+    <div class="card">
+      <div class="card-title">
+        <span>oblitus inbox questions</span>
+        <span class="card-title-mono" id="questions-count">0 pending</span>
+      </div>
+      <div id="questions-container">
+        <div class="field-help" style="text-align: center; padding: 2rem;">Loading questions desk...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN: STATS AND PRESENCE -->
+  <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+    <!-- API USAGE POPUP MODULE -->
+    <div class="card">
+      <div class="card-title">
+        <span>api quota metrics</span>
+        <span class="badge" style="color: #ff5252;">live</span>
+      </div>
+      <div class="usage-list" id="usage-list">
+        <!-- Rendered by JS -->
+        <div class="field-help">Resolving system metrics...</div>
+      </div>
+    </div>
+
+    <!-- SYSTEM CREDENTIALS CHECK -->
+    <div class="card" style="font-family: var(--font-mono); font-size: 10px;">
+      <div class="card-title" style="font-family: var(--font-sans); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">
+        <span>security context</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; color: var(--dim);">
+        <div style="display: flex; justify-content: space-between;">
+          <span>role:</span>
+          <span style="color: var(--white);">developer_root</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>auth method:</span>
+          <span style="color: var(--white);" id="auth-method-display">token</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>status:</span>
+          <span style="color: var(--accent-green);">signed_in</span>
+        </div>
+        <div class="inline-divider" style="margin: 0.5rem 0;"></div>
+        <p style="font-size: 9px; line-height: 1.4;">
+          all core updates write to standard JSON database persistence and replicate to live visitor sessions immediately.
+        </p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast">
+  <div class="toast-dot"></div>
+  <span id="toast-text">System updated successfully</span>
+</div>
+
+<!-- Load novamark parser directly -->
+<script src="/nova/novamark.js"></script>
+<script>
+  // Auth enforcement
+  const token = localStorage.getItem('nova:session:token');
+  if (!token) {
+    // Check if query parameter contains token
+    const params = new URLSearchParams(window.location.search);
+    const queryToken = params.get('token');
+    if (queryToken) {
+      localStorage.setItem('nova:session:token', queryToken);
+      // Clean query string
+      window.history.replaceState({}, document.title, window.location.pathname);
+      window.location.reload();
+    } else {
+      window.location.href = '/nova/panel';
+    }
+  }
+
+  // Set user label
+  document.getElementById('user-display').textContent = 'nova_admin';
+  document.getElementById('auth-method-display').textContent = 'github_oauth';
+
+  // Logout handler
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    try {
+      await fetch('/nova/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+    } catch(e) {}
+    localStorage.removeItem('nova:session:token');
+    window.location.href = '/nova/panel';
+  });
+
+  // Toast alert helper
+  function showToast(text, isError = false) {
+    const toast = document.getElementById('toast');
+    const dot = toast.querySelector('.toast-dot');
+    toast.querySelector('#toast-text').textContent = text;
+    dot.style.background = isError ? 'var(--accent-red)' : 'var(--accent-green)';
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3000);
+  }
+
+  // Load site config
+  let currentConfig = {};
+  async function loadConfig() {
+    try {
+      const res = await fetch('/api/config');
+      if (res.ok) {
+        currentConfig = await res.json();
+        
+        // Populate inputs
+        document.getElementById('now-project-name').value = currentConfig['now:project_name'] || '';
+        document.getElementById('now-project-desc').value = currentConfig['now:project_desc'] || '';
+        document.getElementById('now-project-url').value = currentConfig['now:project_url'] || '';
+        document.getElementById('now-project-status').value = currentConfig['now:project_status'] || '';
+        document.getElementById('now-listening').value = currentConfig['now:listening'] || '';
+        document.getElementById('now-listening-meta').value = currentConfig['now:listening_meta'] || '';
+        document.getElementById('about-body').value = currentConfig['about:body'] || '';
+        document.getElementById('about-tags').value = currentConfig['about:tags'] || '';
+        document.getElementById('discord-id').value = currentConfig['discord:id'] || '';
+        document.getElementById('lastfm-username').value = currentConfig['lastfm:username'] || '';
+
+        document.getElementById('hero-status-text').value = currentConfig['hero:status_text'] || '';
+        document.getElementById('hero-status-subtext').value = currentConfig['hero:status_subtext'] || '';
+
+        document.getElementById('card-status-title').value = currentConfig['card:status_title'] || '';
+        document.getElementById('card-visitors-title').value = currentConfig['card:visitors_title'] || '';
+        document.getElementById('card-visitors-label').value = currentConfig['card:visitors_label'] || '';
+        document.getElementById('card-visitors-meta').value = currentConfig['card:visitors_meta'] || '';
+        document.getElementById('card-discord-title').value = currentConfig['card:discord_title'] || '';
+        document.getElementById('discord-fallback').value = currentConfig['discord:fallback'] || '';
+        document.getElementById('card-spotify-title').value = currentConfig['card:spotify_title'] || '';
+
+        // Live preview trigger
+        triggerPreview();
+      }
+    } catch(e) {
+      console.error(e);
+      showToast('Failed to load CMS variables', true);
+    }
+  }
+
+  // Live preview parsing
+  function triggerPreview() {
+    const p = document.getElementById('about-body').value;
+    
+    if (window.NovaMark) {
+      document.getElementById('preview-about').innerHTML = window.NovaMark.parse(p);
+    } else {
+      document.getElementById('preview-about').textContent = p;
+    }
+  }
+
+  document.getElementById('about-body').addEventListener('input', triggerPreview);
+
+  // Load current live status
+  async function loadStatus() {
+    try {
+      const res = await fetch('/api/status');
+      if (res.ok) {
+        const data = await res.json();
+        // Set selected class in status options
+        document.querySelectorAll('.status-circle-select').forEach(el => {
+          el.classList.toggle('selected', el.dataset.status === data.status);
+        });
+        document.getElementById('hero-status-text').value = currentConfig['hero:status_text'] || data.status;
+        document.getElementById('hero-status-subtext').value = currentConfig['hero:status_subtext'] || '';
+      }
+    } catch(e) {}
+  }
+
+  // Live status selection
+  let selectedStatus = 'online';
+  document.querySelectorAll('.status-circle-select').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.status-circle-select').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedStatus = el.dataset.status;
+      document.getElementById('hero-status-text').value = selectedStatus;
+    });
+  });
+
+  // Save live heartbeat status
+  document.getElementById('save-status-btn').addEventListener('click', async () => {
+    const customText = document.getElementById('hero-status-text').value;
+    const customSub = document.getElementById('hero-status-subtext').value;
+    const activeSel = document.querySelector('.status-circle-select.selected');
+    const statusVal = activeSel ? activeSel.dataset.status : 'online';
+
+    try {
+      // 1. Save heartbeat
+      const heartbeatRes = await fetch('/api/status/heartbeat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ status: statusVal })
+      });
+
+      // 2. Save site config labels
+      const configRes = await fetch('/api/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          'hero:status_text': customText,
+          'hero:status_subtext': customSub
+        })
+      });
+
+      if (heartbeatRes.ok && configRes.ok) {
+        showToast('Presence heartbeat synced');
+        loadConfig();
+      } else {
+        showToast('Unauthorized session', true);
+      }
+    } catch(e) {
+      showToast('Synchronization error', true);
+    }
+  });
+
+  // Save CMS Config
+  document.getElementById('save-config-btn').addEventListener('click', async () => {
+    const payload = {
+      'now:project_name': document.getElementById('now-project-name').value,
+      'now:project_desc': document.getElementById('now-project-desc').value,
+      'now:project_url': document.getElementById('now-project-url').value,
+      'now:project_status': document.getElementById('now-project-status').value,
+      'now:listening': document.getElementById('now-listening').value,
+      'now:listening_meta': document.getElementById('now-listening-meta').value,
+      'about:body': document.getElementById('about-body').value,
+      'about:tags': document.getElementById('about-tags').value,
+      'discord:id': document.getElementById('discord-id').value,
+      'lastfm:username': document.getElementById('lastfm-username').value,
+      'hero:status_text': document.getElementById('hero-status-text').value,
+      'hero:status_subtext': document.getElementById('hero-status-subtext').value,
+      'card:status_title': document.getElementById('card-status-title').value,
+      'card:visitors_title': document.getElementById('card-visitors-title').value,
+      'card:visitors_label': document.getElementById('card-visitors-label').value,
+      'card:visitors_meta': document.getElementById('card-visitors-meta').value,
+      'card:discord_title': document.getElementById('card-discord-title').value,
+      'discord:fallback': document.getElementById('discord-fallback').value,
+      'card:spotify_title': document.getElementById('card-spotify-title').value,
+    };
+
+    try {
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        showToast('CMS variables updated');
+        loadConfig();
+      } else {
+        showToast('Unauthorized session', true);
+      }
+    } catch(e) {
+      showToast('Failed to update config', true);
+    }
+  });
+
+  // Load Questions Inbox Desk
+  async function loadQuestions() {
+    try {
+      const res = await fetch('/api/ask');
+      if (res.ok) {
+        const list = await res.json();
+        const pending = list.filter(q => q.answered === 0);
+        document.getElementById('questions-count').textContent = pending.length + ' pending';
+        
+        const container = document.getElementById('questions-container');
+        if (list.length === 0) {
+          container.innerHTML = '<div class="field-help" style="text-align: center; padding: 2rem;">no questions received.</div>';
+          return;
+        }
+
+        container.innerHTML = list.map((q, idx) => `
+          <div class="question-item">
+            <div class="question-q">"${escapeHtml(q.question)}"</div>
+            <div class="question-meta">
+              received ${new Date(q.created_at).toLocaleString().toLowerCase()} · status: ${q.answered ? '<span style="color:var(--accent-green);">answered</span>' : '<span style="color:var(--accent-amber);">pending</span>'}
+            </div>
+            ${q.answered ? `
+              <div style="font-family: var(--font-mono); font-size: 11px; padding: 10px; background: rgba(255,255,255,0.02); border-left: 2px solid var(--white); margin-top: 5px;">
+                answer: ${escapeHtml(q.answer)}
+              </div>
+            ` : `
+              <div class="answer-input-container">
+                <input type="text" id="answer-input-${idx}" placeholder="type answer..." style="padding: 6px 10px; font-size: 11px;">
+                <button class="btn-primary" onclick="submitAnswer(${idx}, '${escapeHtml(q.question)}', '${q.created_at}')" style="padding: 6px 12px; font-size: 10px; white-space:nowrap;">submit</button>
+              </div>
+            `}
+          </div>
+        `).join('');
+      }
+    } catch(e) {}
+  }
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+  // Answer question helper
+  window.submitAnswer = async function(idx, questionText, createdAt) {
+    const input = document.getElementById(`answer-input-${idx}`);
+    const answerVal = input.value.trim();
+    if (!answerVal) return;
+
+    try {
+      // Fetch current config/database structure of questions and answer it
+      const res = await fetch('/api/ask/answer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          question: questionText,
+          created_at: createdAt,
+          answer: answerVal
+        })
+      });
+
+      if (res.ok) {
+        showToast('Question answered successfully');
+        loadQuestions();
+      } else {
+        showToast('Failed to reply', true);
+      }
+    } catch(e) {
+      showToast('Network error', true);
+    }
+  }
+
+  // Load & render API Quota usages
+  async function loadUsage() {
+    try {
+      const res = await fetch('/api/usage');
+      if (res.ok) {
+        const metrics = await res.json();
+        renderUsage(metrics);
+      } else {
+        // Fallback default mock data if not set up
+        renderUsage(null);
+      }
+    } catch(e) {
+      renderUsage(null);
+    }
+  }
+
+  function renderUsage(metrics) {
+    const listContainer = document.getElementById('usage-list');
+    
+    // Limits specifications
+    const defaults = [
+      { name: 'GitHub Stats API', key: 'github', limit: 5000, value: metrics?.github || 42, unit: 'req' },
+      { name: 'Last.fm API', key: 'lastfm', limit: 1000, value: metrics?.lastfm || 15, unit: 'req' },
+      { name: 'Lanyard API', key: 'lanyard', limit: Infinity, value: metrics?.lanyard || 188, unit: 'req' },
+      { name: 'KV Reads', key: 'kv_reads', limit: 100000, value: metrics?.kv_reads || 2542, unit: 'reads' },
+      { name: 'KV Writes', key: 'kv_writes', limit: 1000, value: metrics?.kv_writes || 84, unit: 'writes' },
+      { name: 'D1 Reads', key: 'd1_reads', limit: 5000000, value: metrics?.d1_reads || 14208, unit: 'reads' },
+      { name: 'D1 Writes', key: 'd1_writes', limit: 100000, value: metrics?.d1_writes || 612, unit: 'writes' },
+      { name: 'Turso Reads', key: 'turso_reads', limit: 1000000000, value: metrics?.turso_reads || 855000, unit: 'reads/mo' },
+      { name: 'Turso Writes', key: 'turso_writes', limit: 25000000, value: metrics?.turso_writes || 42000, unit: 'writes/mo' }
+    ];
+
+    listContainer.innerHTML = defaults.map(item => {
+      const isUnlimited = item.limit === Infinity;
+      const percentage = isUnlimited ? 0 : Math.min(100, (item.value / item.limit) * 100);
+      
+      let barColorClass = 'bar-white';
+      if (percentage >= 80) barColorClass = 'bar-red';
+      else if (percentage >= 50) barColorClass = 'bar-amber';
+
+      const displayVal = item.value.toLocaleString();
+      const displayLimit = isUnlimited ? 'unlimited' : item.limit.toLocaleString();
+
+      return `
+        <div class="usage-item">
+          <div class="usage-meta">
+            <span class="usage-name">${item.name}</span>
+            <span class="usage-stats">${displayVal} / ${displayLimit} ${item.unit}</span>
+          </div>
+          ${isUnlimited ? '' : `
+            <div class="usage-bar-bg">
+              <div class="usage-bar ${barColorClass}" style="width: ${percentage}%"></div>
+            </div>
+          `}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Initial loads
+  loadConfig().then(() => {
+    loadStatus();
+    loadQuestions();
+    loadUsage();
+  });
+  
+  // Refresh stats periodically
+  setInterval(loadUsage, 30000);
+</script>
+</body>
+</html>
