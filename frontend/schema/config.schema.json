@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "fields": {
+    "hero:status_text":    { "type": "string",   "required": true  },
+    "hero:status_subtext": { "type": "string",   "required": false },
+    "now:listening":       { "type": "string",   "required": false },
+    "now:listening_meta":  { "type": "string",   "required": false },
+    "now:project_name":    { "type": "string",   "required": false },
+    "now:project_desc":    { "type": "string",   "required": false },
+    "now:project_url":     { "type": "string",   "required": false },
+    "now:project_status":  { "type": "string",   "required": false },
+    "about:body":          { "type": "novamark", "required": true  },
+    "discord:id":          { "type": "string",   "required": false },
+    "tags":                { "type": "array",    "required": false },
+    "socials": {
+      "type": "array",
+      "required": false,
+      "items": {
+        "platform": { "type": "string", "required": true },
+        "handle":   { "type": "string", "required": true },
+        "url":      { "type": "string", "required": true }
+      }
+    }
+  }
+}
