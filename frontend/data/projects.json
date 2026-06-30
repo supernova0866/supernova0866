@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "name": "project one",
+    "desc": "desc.",
+    "stack": ["html", "css", "js"],
+    "link": "",
+    "pinned": true
+  },
+  {
+    "id": 2,
+    "name": "project two",
+    "desc": "hi lol.",
+    "stack": ["python", "api"],
+    "link": "",
+    "pinned": false
+  },
+  {
+    "id": 3,
+    "name": "project three",
+    "desc": "te.",
+    "stack": ["react", "node", "sql"],
+    "link": "",
+    "pinned": true
+  }
+]
