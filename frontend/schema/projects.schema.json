@@ -1,0 +1,11 @@
+{
+  "type": "array",
+  "items": {
+    "id":     { "type": "number",  "required": true },
+    "name":   { "type": "string",  "required": true },
+    "desc":   { "type": "string",  "required": true },
+    "stack":  { "type": "array",   "required": true },
+    "link":   { "type": "string",  "required": false },
+    "pinned": { "type": "boolean", "required": false }
+  }
+}
