@@ -1,0 +1,19 @@
+{
+  "hero:status_text": "do not disturb",
+  "hero:status_subtext": "probably doing nothing.\nor maybe something",
+  "now:listening": "artist or album you can't stop playing",
+  "now:listening_meta": "on repeat",
+  "now:project_name": "",
+  "now:project_desc": "",
+  "now:project_url": "",
+  "now:project_status": "in progress",
+  "about:body": "hey, i'm {highlight:nova} — a student who spends too much time on the internet and not enough time sleeping. i build things to understand them, and i'm convinced the best way to learn something is to make it break.\n{divider}\nright now i'm exploring {bold:your interests here}, dabbling in {bold:another interest}, and occasionally touching grass. i care a lot about {highlight:something you value} and try to bring that into whatever i make.",
+  "discord:id": "your-handle",
+  "tags": ["web dev", "open source", "design", "linux", "coffee", "your tag", "your tag"],
+  "socials": [
+    { "platform": "github",      "handle": "@your-handle",  "url": "#" },
+    { "platform": "twitter / x", "handle": "@your-handle",  "url": "#" },
+    { "platform": "discord",     "handle": "your-handle",   "url": "#" },
+    { "platform": "email",       "handle": "you@email.com", "url": "#" }
+  ]
+}
