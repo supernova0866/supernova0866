@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>nova</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #000000;
+    --white: #ffffff;
+    --dim: rgba(255,255,255,0.35);
+    --dimmer: rgba(255,255,255,0.12);
+    --glow-soft: 0 0 18px rgba(255,255,255,0.08);
+    --glow-hover: 0 0 28px rgba(255,255,255,0.18);
+    --font-sans: 'Inter', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --nav-h: 64px;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--black);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) var(--black);
+  }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    line-height: 1.7;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── entry gate ── */
+  #gate {
+    position: fixed; inset: 0;
+    background: var(--black);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1.5rem;
+    transition: opacity .8s ease, visibility .8s ease;
+  }
+  #gate.hidden { opacity: 0; visibility: hidden; }
+  #gate-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .18em;
+    color: var(--dim);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+  #gate-name {
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-weight: 300;
+    letter-spacing: -.02em;
+    color: var(--white);
+    text-shadow: 0 0 60px rgba(255,255,255,0.25);
+  }
+  @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:.9} }
+
+  /* ── floating nav ── */
+  #nav {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 100px;
+    padding: 6px 8px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.03), var(--glow-soft);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .6s ease, box-shadow .3s ease;
+  }
+  #nav.visible { opacity: 1; pointer-events: all; }
+  #nav:hover { box-shadow: 0 0 0 1px rgba(255,255,255,0.06), var(--glow-hover); }
+
+  .nav-link {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    color: var(--dim);
+    text-decoration: none;
+    padding: 7px 16px;
+    border-radius: 100px;
+    transition: color .2s, background .2s;
+    cursor: pointer;
+    position: relative;
+  }
+  .nav-link:hover, .nav-link.active {
+    color: var(--white);
+    background: rgba(255,255,255,0.07);
+  }
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 4px; left: 50%;
+    transform: translateX(-50%);
+    width: 3px; height: 3px;
+    background: var(--white);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--white);
+  }
+
+  .nav-status-pill {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .02em;
+    color: var(--dim);
+    padding: 7px 14px 7px 16px;
+    border-left: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+    white-space: nowrap;
+    text-transform: lowercase;
+  }
+  .nav-status-pill .nav-status-dot {
+    width: 5px;
+    height: 5px;
+    background: #ff5252;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 4px #ff5252;
+  }
+  @media (max-width: 600px) {
+    .nav-status-pill { display: none; }
+  }
+
+  /* ── sections ── */
+  #app {
+    opacity: 0;
+    transition: opacity .8s ease;
+  }
+  #app.visible { opacity: 1; }
+
+  .section {
+    display: none;
+    min-height: 100vh;
+    padding: calc(var(--nav-h) + 60px) 5vw 80px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .section.active { display: flex; flex-direction: column; justify-content: center; }
+
+  /* ── hero ── */
+  #home {
+    display: none;
+    align-items: center;
+    gap: 4rem;
+    width: 100%;
+    max-width: 1250px;
+    margin: 0 auto;
+    padding-left: 3vw;
+    padding-right: 3vw;
+  }
+  #home.active {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+  }
+  @media (max-width: 900px) {
+    #home.active {
+      grid-template-columns: 1fr;
+      gap: 3rem;
+      align-items: flex-start;
+    }
+  }
+
+  .home-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .hero-eyebrow-bottom {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: .02em;
+    color: var(--dim);
+    margin-top: 0.5rem;
+    text-transform: lowercase;
+  }
+
+  .hero-name {
+    font-size: clamp(3rem, 9.5vw, 7.2rem);
+    font-weight: 900;
+    letter-spacing: -.05em;
+    line-height: .92;
+    color: var(--white);
+    position: relative;
+    text-transform: lowercase;
+  }
+  .hero-name .cursor-blink {
+    display: inline-block;
+    width: 3px;
+    height: .85em;
+    background: var(--white);
+    margin-left: 6px;
+    vertical-align: middle;
+    animation: blink .9s step-end infinite;
+    box-shadow: 0 0 8px var(--white);
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .home-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+  }
+  @media (max-width: 900px) {
+    .home-right {
+      align-items: flex-start;
+    }
+  }
+
+  .status-clock-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    text-align: right;
+  }
+  @media (max-width: 900px) {
+    .status-clock-card {
+      text-align: left;
+    }
+  }
+
+  .clock-display {
+    font-family: var(--font-sans);
+    font-size: 3rem;
+    font-weight: 400;
+    letter-spacing: -0.03em;
+    color: var(--white);
+    line-height: 1;
+  }
+  .clock-seconds {
+    font-family: var(--font-mono);
+    font-size: 1.8rem;
+    color: rgba(255,255,255,0.22);
+    margin-left: 2px;
+  }
+  .clock-location {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .08em;
+    color: var(--dim);
+    text-transform: lowercase;
+    margin-top: 2px;
+  }
+
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 1.8rem;
+  }
+  @media (max-width: 900px) {
+    .status-indicator {
+      justify-content: flex-start;
+    }
+  }
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    background: #ff5252;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(255,82,82,0.8);
+  }
+  .status-dot.pulsing {
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(255,82,82,0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255,82,82,0); }
+    100% { transform: scale(0.92); box-shadow: 0 0 0 0 rgba(255,82,82,0); }
+  }
+  .status-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.65);
+    text-transform: lowercase;
+    letter-spacing: 0.04em;
+  }
+  .status-subtext {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.3);
+    text-transform: lowercase;
+    margin-top: 0.4rem;
+  }
+
+  /* ── section title style ── */
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .25em;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+    max-width: 200px;
+  }
+  .section-title {
+    font-size: clamp(2rem, 5vw, 2.7rem);
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-top: 0;
+    margin-bottom: 2.5rem;
+    text-transform: lowercase;
+  }
+
+  /* ── now ── */
+  .now-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  .now-card {
+    padding: 2rem;
+    background: rgba(255,255,255,0.02);
+    transition: background .3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .now-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120px circle at var(--gx, -9999px) var(--gy, -9999px), rgba(255,255,255,0.06) 0%, transparent 100%);
+    pointer-events: none;
+    transition: opacity .2s;
+    opacity: 0;
+  }
+  .now-card:hover::before { opacity: 1; }
+  .now-card:hover { background: rgba(255,255,255,0.025); }
+
+  .now-card-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .2em;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+    margin-bottom: .75rem;
+  }
+  .now-card-value {
+    font-size: 1rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.5;
+  }
+  .now-card-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: rgba(255,255,255,0.2);
+    margin-top: .5rem;
+  }
+  .now-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 100px;
+    padding: 4px 12px;
+    margin-bottom: 2.5rem;
+  }
+  .now-status-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    box-shadow: 0 0 6px rgba(255,255,255,0.4);
+    animation: pulse 2s infinite;
+  }
+
+  /* ── about ── */
+  .about-body {
+    font-size: 1.05rem;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.9;
+    max-width: 600px;
+  }
+  .about-body strong { color: rgba(255,255,255,0.9); font-weight: 400; }
+  .about-divider {
+    width: 40px; height: 1px;
+    background: rgba(255,255,255,0.12);
+    margin: 2.5rem 0;
+  }
+  .about-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 2.5rem;
+    margin-bottom: 4rem;
+  }
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,0.35);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 5px 12px;
+    transition: color .2s, border-color .2s, box-shadow .2s;
+  }
+  .tag:hover {
+    color: rgba(255,255,255,0.8);
+    border-color: rgba(255,255,255,0.2);
+    box-shadow: 0 0 12px rgba(255,255,255,0.06);
+  }
+
+  /* ── projects ── */
+  .project-list { display: flex; flex-direction: column; gap: 1px; }
+  .project-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 1.75rem 0 2.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    gap: 2rem;
+    position: relative;
+    transition: padding .2s;
+  }
+  .project-item::before {
+    content: '';
+    position: absolute;
+    left: -20px; right: -20px; top: 0; bottom: 0;
+    background: radial-gradient(120px circle at var(--gx, -9999px) var(--gy, -9999px), rgba(255,255,255,0.05) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity .2s;
+    pointer-events: none;
+  }
+  .project-item:hover::before { opacity: 1; }
+
+  .project-info { flex: 1; }
+  .project-name {
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: .4rem;
+    transition: color .2s;
+  }
+  .project-item:hover .project-name { color: var(--white); }
+  .project-desc {
+    font-size: .875rem;
+    color: rgba(255,255,255,0.3);
+    line-height: 1.6;
+  }
+  .project-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: .75rem;
+  }
+  .stack-pill {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .08em;
+    color: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 3px;
+    padding: 2px 8px;
+  }
+  .project-link {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: rgba(255,255,255,0.2);
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+    padding: 6px 12px;
+    transition: color .2s, border-color .2s, box-shadow .2s;
+    white-space: nowrap;
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+  .project-link:hover {
+    color: rgba(255,255,255,0.8);
+    border-color: rgba(255,255,255,0.2);
+    box-shadow: 0 0 14px rgba(255,255,255,0.07);
+  }
+
+  .view-all-row {
+    margin-top: 2rem;
+    margin-bottom: 2.5rem;
+  }
+  .view-all-link {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .08em;
+    color: rgba(255,255,255,0.4);
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 100px;
+    padding: 8px 18px;
+    transition: color .2s, border-color .2s, box-shadow .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .view-all-link:hover {
+    color: var(--white);
+    border-color: rgba(255,255,255,0.2);
+    box-shadow: 0 0 14px rgba(255,255,255,0.07);
+  }
+
+  /* ── socials ── */
+  .socials-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .social-item {
+    display: grid;
+    grid-template-columns: 150px 1fr auto;
+    align-items: center;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    text-decoration: none;
+  }
+  .social-platform {
+    font-size: 1rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.75);
+    transition: color .2s;
+    text-transform: lowercase;
+  }
+  .social-item:hover .social-platform { color: var(--white); text-shadow: 0 0 20px rgba(255,255,255,0.35); }
+  .social-handle {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    transition: color .2s;
+  }
+  .social-item:hover .social-handle { color: rgba(255,255,255,0.5); }
+  .social-arrow {
+    font-size: 16px;
+    color: rgba(255,255,255,0.1);
+    transition: color .2s, transform .2s;
+    margin-left: 1.5rem;
+  }
+  .social-item:hover .social-arrow { color: rgba(255,255,255,0.4); transform: translateX(4px); }
+
+  .socials-note {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    color: rgba(255,255,255,0.15);
+    margin-top: 3rem;
+  }
+
+  /* ── cursor glow proximity effect ── */
+  .glow-target {
+    position: relative;
+    overflow: hidden;
+  }
+  .glow-target::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120px circle at var(--gx, -9999px) var(--gy, -9999px), rgba(255,255,255,0.055) 0%, transparent 100%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .glow-target:hover::after { opacity: 1; }
+
+  /* ── page transition ── */
+  .section { animation: fadeUp .4s ease both; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── noise texture overlay ── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9990;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    opacity: .6;
+  }
+
+  /* ── footer ── */
+  #footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 400;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 12px 24px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .6s ease;
+  }
+  #footer.visible { opacity: 1; pointer-events: all; }
+
+  .footer-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .15em;
+    color: rgba(255,255,255,0.2);
+    padding: 0 6px;
+    white-space: nowrap;
+  }
+
+  /* ── page footer ── */
+  .page-footer {
+    margin-top: auto;
+    padding-top: 5rem;
+    padding-bottom: 3rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  .footer-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .footer-sign {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+  .footer-sign-name {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.8);
+    letter-spacing: -.01em;
+  }
+  .footer-sign-sub {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .15em;
+    color: rgba(255,255,255,0.2);
+  }
+
+  .footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    align-items: flex-end;
+  }
+  .footer-link {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,0.25);
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .footer-link:hover { color: rgba(255,255,255,0.7); }
+
+  .footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .footer-copy {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .15em;
+    color: rgba(255,255,255,0.12);
+  }
+
+  .footer-cursor-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .footer-cursor-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .footer-cursor-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .13em;
+    color: rgba(255,255,255,0.15);
+  }
+  /* ── custom select ── */
+  .custom-select {
+    position: relative;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .08em;
+    color: rgba(255,255,255,0.35);
+    width: 82px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .custom-select-trigger {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 4px 22px 4px 9px;
+    transition: color .2s, border-color .2s;
+    position: relative;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .custom-select-trigger::after {
+    content: '';
+    position: absolute;
+    right: 7px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 7px; height: 4px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4' viewBox='0 0 7 4'%3E%3Cpath d='M0 0l3.5 4L7 0z' fill='rgba(255,255,255,0.2)'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    transition: transform .2s;
+  }
+  .custom-select.open .custom-select-trigger::after {
+    transform: translateY(-50%) rotate(180deg);
+  }
+  .custom-select:hover .custom-select-trigger,
+  .custom-select.open .custom-select-trigger {
+    color: rgba(255,255,255,0.65);
+    border-color: rgba(255,255,255,0.18);
+  }
+  .custom-select-options {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    width: 100%;
+    background: #080808;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+    z-index: 9999;
+  }
+  .custom-select.open .custom-select-options { display: block; }
+  .custom-select-option {
+    padding: 5px 9px;
+    color: rgba(255,255,255,0.3);
+    transition: color .15s, background .15s;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .custom-select-option:hover {
+    color: rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.04);
+  }
+  .custom-select-option.selected {
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* ── scrollbar ── */
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+  * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+
+  @media (max-width: 600px) {
+    .now-grid { grid-template-columns: 1fr; }
+    #nav { gap: 0; padding: 4px 6px; }
+    .nav-link { padding: 6px 10px; font-size: 10px; }
+    .section { padding-top: calc(var(--nav-h) + 40px); }
+  }
+</style>
+</head>
+<body>
+
+<!-- entry gate -->
+<div id="gate">
+  <div id="gate-name">nova</div>
+  <div id="gate-label">click anywhere to enter</div>
+</div>
+
+<!-- floating nav -->
+<nav id="nav" aria-label="Main navigation">
+  <a class="nav-link active" href="#" data-section="home">home</a>
+  <a class="nav-link" href="#" data-section="now">now</a>
+  <a class="nav-link" href="#" data-section="about">about</a>
+  <a class="nav-link" href="#" data-section="projects">projects</a>
+  <a class="nav-link" href="#" data-section="socials">socials</a>
+  <span class="nav-status-pill"><span class="nav-status-dot"></span><span class="nav-time-mini">16:22</span></span>
+</nav>
+
+<!-- main app -->
+<main id="app">
+
+  <!-- HOME -->
+  <section class="section active" id="home" aria-label="Home">
+    <div class="home-left">
+      <h1 class="hero-name">
+        <span id="typewriter"></span><span class="cursor-blink" aria-hidden="true"></span>
+      </h1>
+    </div>
+
+    <div class="home-right">
+      <div class="status-clock-card">
+        <div class="clock-display">
+          <span id="clock-time">--:--</span><span class="clock-seconds" id="clock-seconds">:--</span>
+        </div>
+        <div class="clock-location" id="clock-location">on the internet</div>
+
+        <div class="status-indicator">
+          <span class="status-dot pulsing"></span>
+          <span class="status-text">do not disturb</span>
+        </div>
+
+        <p class="status-subtext">
+          probably doing nothing.<br>or maybe something
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- NOW -->
+  <section class="section" id="now" aria-label="Now">
+    <div class="section-label">now</div>
+    <h2 class="section-title">live</h2>
+    <div class="now-status">
+      <span class="now-status-dot" aria-hidden="true"></span>
+      updated recently
+    </div>
+    <div class="now-grid">
+      <!-- CURRENT STATUS -->
+      <div class="now-card glow-target" id="now-card-status">
+        <div class="now-card-label">current status</div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <div class="status-dot pulsing" id="now-status-dot" style="width: 8px; height: 8px; background: #ff5252; border-radius: 50%; box-shadow: 0 0 10px #ff5252;"></div>
+          <div class="now-card-value status-text" id="now-status-text" style="font-size: 1.8rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1.1;">do not disturb</div>
+          <span class="status-badge" id="now-status-badge" style="font-family: var(--font-mono); font-size: 10px; color: var(--dim); border: 1px solid var(--dimmer); border-radius: 100px; padding: 2px 10px; text-transform: lowercase; margin-left: 2px;">desktop</span>
+        </div>
+        <div class="now-card-meta status-subtext" id="now-status-subtext" style="margin-top: 1rem; color: rgba(255,255,255,0.45); font-size: 11px;">probably doing nothing.</div>
+      </div>
+
+      <!-- ROOM COUNT -->
+      <div class="now-card glow-target" id="now-card-visitors">
+        <div class="now-card-label">room count</div>
+        <div style="display: flex; align-items: baseline; gap: 8px;">
+          <div class="now-card-value" id="now-visitor-count" style="font-size: 3rem; font-weight: 400; line-height: 1;">1</div>
+          <span style="font-family: var(--font-mono); font-size: 11px; color: var(--dim);">visitors</span>
+        </div>
+        <div class="now-card-meta" id="now-visitor-domain" style="margin-top: 1.25rem; color: rgba(255,255,255,0.45); font-size: 11px;">how many people are currently on the site</div>
+      </div>
+
+      <!-- DISCORD ACTIVITY -->
+      <div class="now-card glow-target" id="now-card-discord">
+        <div class="now-card-label">discord activity</div>
+        <div class="now-card-value" id="now-discord-activity" style="font-size: 1rem; font-weight: 300; color: rgba(255,255,255,0.85); min-height: 2.5rem; display: flex; align-items: center;">got no activity running rn</div>
+        <div class="now-card-meta" id="now-discord-tag" style="margin-top: 0.75rem; color: rgba(255,255,255,0.2); font-size: 10px;">offline</div>
+      </div>
+
+      <!-- SPOTIFY -->
+      <div class="now-card glow-target" id="now-card-spotify">
+        <div class="now-card-label">spotify</div>
+        <div class="now-card-value" id="now-spotify-playing" style="font-size: 1rem; font-weight: 300; color: rgba(255,255,255,0.85); min-height: 2.5rem; display: flex; align-items: center;">nothing playing on spotify at the moment.</div>
+        <div class="now-card-meta" id="now-spotify-meta" style="margin-top: 0.75rem; color: rgba(255,255,255,0.2); font-size: 10px;">on repeat</div>
+      </div>
+    </div>
+
+    <!-- CURRENT PROJECT -->
+    <div class="now-card glow-target" id="now-card-project" style="margin-top: 1.25rem;">
+      <div class="now-card-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem;">
+        <div class="now-card-label" style="margin-bottom: 0;">current project</div>
+        <span id="now-project-status" style="font-family: var(--font-mono); font-size: 10px; color: var(--dim); border: 1px solid var(--dimmer); border-radius: 100px; padding: 2px 10px; text-transform: lowercase;"></span>
+      </div>
+      <a id="now-project-link" href="#" target="_blank" rel="noopener" style="text-decoration: none; color: inherit;">
+        <div class="now-card-value" id="now-project-name" style="font-size: 1.6rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1.15; color: rgba(255,255,255,0.9);">—</div>
+      </a>
+      <div class="now-card-meta" id="now-project-desc" style="margin-top: 0.75rem; color: rgba(255,255,255,0.45); font-size: 11px; line-height: 1.5;"></div>
+    </div>
+
+    <footer class="page-footer" aria-label="Footer">
+      <div class="footer-top">
+        <div class="footer-sign">
+          <div class="footer-sign-name">nova</div>
+        </div>
+        <nav class="footer-links" aria-label="Footer links">
+          <a href="#" class="footer-link" data-section="home">main</a>
+          <a href="/oblitus" class="footer-link">oblitus</a>
+        </nav>
+      </div>
+      <div class="footer-bottom">
+        <span class="footer-copy">© 2026 nova · built from scratch · no frameworks harmed</span>
+        <div class="footer-cursor-controls">
+          <div class="footer-cursor-row">
+            <span class="footer-cursor-label">cursor shape ↝</span>
+            <div class="custom-select" id="select-cursor" data-value="default">
+              <div class="custom-select-trigger">default</div>
+              <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="default">default</div>
+                <div class="custom-select-option" data-value="glow-circle">glow circle</div>
+                <div class="custom-select-option" data-value="tri-force">tri-force</div>
+              </div>
+            </div>
+          </div>
+          <div class="footer-cursor-row">
+            <span class="footer-cursor-label">follows cursor ↝</span>
+            <div class="custom-select" id="select-follower" data-value="cat">
+              <div class="custom-select-trigger">cat</div>
+              <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="cat">cat</div>
+                <div class="custom-select-option" data-value="calico">calico</div>
+                <div class="custom-select-option" data-value="dog">dog</div>
+                <div class="custom-select-option" data-value="eevee">eevee</div>
+                <div class="custom-select-option" data-value="ghost">ghost</div>
+                <div class="custom-select-option" data-value="fox">fox</div>
+                <div class="custom-select-option" data-value="none">none</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="section" id="about" aria-label="About">
+    <div class="section-label">about</div>
+    <h2 class="section-title">about</h2>
+    <div class="about-body" id="about-body-main" style="max-width: 600px; display: flex; flex-direction: column; gap: 1rem; white-space: pre-wrap;"></div>
+    <div class="about-tags" id="about-tags-container" role="list" aria-label="Interests and skills"></div>
+
+    <footer class="page-footer" aria-label="Footer">
+      <div class="footer-top">
+        <div class="footer-sign">
+          <div class="footer-sign-name">nova</div>
+        </div>
+        <nav class="footer-links" aria-label="Footer links">
+          <a href="#" class="footer-link" data-section="home">main</a>
+          <a href="/oblitus" class="footer-link">oblitus</a>
+        </nav>
+      </div>
+      <div class="footer-bottom">
+        <span class="footer-copy">© 2026 nova · built from scratch · no frameworks harmed</span>
+        <div class="footer-cursor-controls">
+          <div class="footer-cursor-row">
+            <span class="footer-cursor-label">cursor shape ↝</span>
+            <div class="custom-select" id="select-cursor" data-value="default">
+              <div class="custom-select-trigger">default</div>
+              <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="default">default</div>
+                <div class="custom-select-option" data-value="glow-circle">glow circle</div>
+                <div class="custom-select-option" data-value="tri-force">tri-force</div>
+              </div>
+            </div>
+          </div>
+          <div class="footer-cursor-row">
+            <span class="footer-cursor-label">follows cursor ↝</span>
+            <div class="custom-select" id="select-follower" data-value="cat">
+              <div class="custom-select-trigger">cat</div>
+              <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="cat">cat</div>
+                <div class="custom-select-option" data-value="calico">calico</div>
+                <div class="custom-select-option" data-value="dog">dog</div>
+                <div class="custom-select-option" data-value="eevee">eevee</div>
+                <div class="custom-select-option" data-value="ghost">ghost</div>
+                <div class="custom-select-option" data-value="fox">fox</div>
+                <div class="custom-select-option" data-value="none">none</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </section>
+
+  <!-- PROJECTS -->
+  <section class="section" id="projects" aria-label="Projects">
+    <div class="section-label">projects</div>
+    <h2 class="section-title">projects</h2>
+    <div class="project-list" id="pinned-project-list">
+      <!-- Rendered by JS: pinned projects only -->
+    </div>
+    <div class="view-all-row">
+      <a href="/projects" class="view-all-link">view all →</a>
+    </div>
+
+    <footer class="page-footer" aria-label="Footer">
+      <div class="footer-top">
+        <div class="footer-sign">
+          <div class="footer-sign-name">nova</div>
+        </div>
+        <nav class="footer-links" aria-label="Footer links">
+          <a href="#" class="footer-link" data-section="home">main</a>
+          <a href="/oblitus" class="footer-link">oblitus</a>
+        </nav>
+      </div>
+      <div class="footer-bottom">
+        <span class="footer-copy">© 2026 nova · built from scratch · no frameworks harmed</span>
+        <div class="footer-cursor-controls">
+          <div class="footer-cursor-row">
+            <span class="footer-cursor-label">cursor shape ↝</span>
+            <div class="custom-select" id="select-cursor" data-value="default">
+              <div class="custom-select-trigger">default</div>
+              <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="default">default</div>
+                <div class="custom-select-option" data-value="glow-circle">glow circle</div>
+                <div class="custom-select-option" data-value="tri-force">tri-force</div>
+              </div>
+            </div>
+          </div>
+          <div class="footer-cursor-row">
+            <span class="footer-cursor-label">follows cursor ↝</span>
+            <div class="custom-select" id="select-follower" data-value="cat">
+              <div class="custom-select-trigger">cat</div>
+              <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="cat">cat</div>
+                <div class="custom-select-option" data-value="calico">calico</div>
+                <div class="custom-select-option" data-value="dog">dog</div>
+                <div class="custom-select-option" data-value="eevee">eevee</div>
+                <div class="custom-select-option" data-value="ghost">ghost</div>
+                <div class="custom-select-option" data-value="fox">fox</div>
+                <div class="custom-select-option" data-value="none">none</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </section>
+
+  <!-- SOCIALS -->
+  <section class="section" id="socials" aria-label="Socials">
+    <div class="section-label">socials</div>
+    <h2 class="section-title">socials</h2>
+    <div class="socials-list" id="socials-list-container">
+      <!-- Rendered by JS -->
+    </div>
+    <p class="socials-note">best reached via discord or email · usually responds within a day</p>
+
+    <footer class="page-footer" aria-label="Footer">
+      <div class="footer-top">
+        <div class="footer-sign">
+          <div class="footer-sign-name">nova</div>
+        </div>
+        <nav class="footer-links" aria-label="Footer links">
+          <a href="#" class="footer-link" data-section="home">main</a>
+          <a href="/oblitus" class="footer-link">oblitus</a>
+        </nav>
+      </div>
+      <div class="footer-bottom">
+        <span class="footer-copy">© 2026 nova · built from scratch · no frameworks harmed</span>
+        <div class="footer-cursor-controls">
+          <div class="footer-cursor-row">
+            <span class="footer-cursor-label">cursor shape ↝</span>
+            <div class="custom-select" id="select-cursor" data-value="default">
+              <div class="custom-select-trigger">default</div>
+              <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="default">default</div>
+                <div class="custom-select-option" data-value="glow-circle">glow circle</div>
+                <div class="custom-select-option" data-value="tri-force">tri-force</div>
+              </div>
+            </div>
+          </div>
+          <div class="footer-cursor-row">
+            <span class="footer-cursor-label">follows cursor ↝</span>
+            <div class="custom-select" id="select-follower" data-value="cat">
+              <div class="custom-select-trigger">cat</div>
+              <div class="custom-select-options">
+                <div class="custom-select-option selected" data-value="cat">cat</div>
+                <div class="custom-select-option" data-value="calico">calico</div>
+                <div class="custom-select-option" data-value="dog">dog</div>
+                <div class="custom-select-option" data-value="eevee">eevee</div>
+                <div class="custom-select-option" data-value="ghost">ghost</div>
+                <div class="custom-select-option" data-value="fox">fox</div>
+                <div class="custom-select-option" data-value="none">none</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </section>
+
+</main>
+
+<script>
+
+  // ── proximity glow on cards / project items ──
+  function bindGlow(el) {
+    el.addEventListener('mousemove', e => {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--gx', (e.clientX - r.left) + 'px');
+      el.style.setProperty('--gy', (e.clientY - r.top)  + 'px');
+    });
+    el.addEventListener('mouseleave', () => {
+      el.style.setProperty('--gx', '-9999px');
+      el.style.setProperty('--gy', '-9999px');
+    });
+  }
+  document.querySelectorAll('.glow-target, .now-card').forEach(bindGlow);
+
+  // ── gate ──
+  const gate = document.getElementById('gate');
+  const app  = document.getElementById('app');
+  const nav  = document.getElementById('nav');
+
+  function enter() {
+    gate.classList.add('hidden');
+    app.classList.add('visible');
+    nav.classList.add('visible');
+    startTypewriter();
+  }
+  gate.addEventListener('click', enter);
+  document.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' ') enter(); });
+
+  // ── typewriter ──
+  const names  = ['supernova', 'nova'];
+  let nameIdx  = 0;
+  let charIdx  = 0;
+  let deleting = false;
+  let started  = false;
+  const tw     = document.getElementById('typewriter');
+
+  function tick() {
+    const target = names[nameIdx];
+    if (!deleting) {
+      charIdx++;
+      tw.textContent = target.slice(0, charIdx);
+      if (charIdx === target.length) {
+        deleting = true;
+        setTimeout(tick, 2200);
+        return;
+      }
+      setTimeout(tick, 80 + Math.random() * 40);
+    } else {
+      charIdx--;
+      tw.textContent = target.slice(0, charIdx);
+      if (charIdx === 0) {
+        deleting = false;
+        nameIdx  = (nameIdx + 1) % names.length;
+        setTimeout(tick, 420);
+        return;
+      }
+      setTimeout(tick, 45 + Math.random() * 25);
+    }
+  }
+
+  function startTypewriter() {
+    if (started) return;
+    started = true;
+    setTimeout(tick, 300);
+  }
+
+  // ── dynamic clock ──
+  function updateClock() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+
+    const timeStr = `${hours}:${minutes}`;
+    const secStr = `:${seconds}`;
+
+    const clockTimeEl = document.getElementById('clock-time');
+    const clockSecEl = document.getElementById('clock-seconds');
+    if (clockTimeEl) clockTimeEl.textContent = timeStr;
+    if (clockSecEl) clockSecEl.textContent = secStr;
+
+    const miniTimeEl = document.querySelector('.nav-time-mini');
+    if (miniTimeEl) miniTimeEl.textContent = timeStr;
+  }
+
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz) {
+      const parts = tz.split('/');
+      const city = parts[parts.length - 1].replace(/_/g, ' ').toLowerCase();
+      const clockLocEl = document.getElementById('clock-location');
+      if (clockLocEl) {
+        clockLocEl.textContent = `in ${city}`;
+      }
+    }
+  } catch (e) {
+    // Keep default "on the internet"
+  }
+
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // ── navigation ──
+  const sections  = document.querySelectorAll('.section');
+  const navLinks  = document.querySelectorAll('.nav-link');
+
+  function showSection(id) {
+    sections.forEach(s => {
+      s.classList.remove('active');
+    });
+    navLinks.forEach(l => l.classList.remove('active'));
+
+    const target = document.getElementById(id);
+    if (target) {
+      target.classList.add('active');
+      target.style.animation = 'none';
+      target.offsetHeight;
+      target.style.animation = '';
+    }
+    const activeLink = document.querySelector(`.nav-link[data-section="${id}"]`);
+    if (activeLink) activeLink.classList.add('active');
+  }
+
+  navLinks.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      showSection(link.dataset.section);
+    });
+  });
+
+  document.querySelectorAll('.footer-link[data-section]').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      showSection(link.dataset.section);
+    });
+  });
+
+  // ── custom selects ──
+  document.querySelectorAll('.custom-select').forEach(sel => {
+    const trigger = sel.querySelector('.custom-select-trigger');
+    const options = sel.querySelectorAll('.custom-select-option');
+
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      document.querySelectorAll('.custom-select.open').forEach(s => {
+        if (s !== sel) s.classList.remove('open');
+      });
+      sel.classList.toggle('open');
+    });
+
+    options.forEach(opt => {
+      opt.addEventListener('click', e => {
+        e.stopPropagation();
+        const val = opt.dataset.value;
+        sel.dataset.value = val;
+        trigger.textContent = opt.textContent;
+        options.forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        sel.classList.remove('open');
+
+        if (sel.id === 'select-cursor' && window.CursorJS) window.CursorJS.loadCursor(val);
+        if (sel.id === 'select-follower' && window.CursorJS) window.CursorJS.loadFollower(val);
+
+        document.querySelectorAll('.custom-select[id="' + sel.id + '"]').forEach(other => {
+          if (other === sel) return;
+          other.dataset.value = val;
+          other.querySelector('.custom-select-trigger').textContent = opt.textContent;
+          other.querySelectorAll('.custom-select-option').forEach(o => {
+            o.classList.toggle('selected', o.dataset.value === val);
+          });
+        });
+      });
+    });
+  });
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.custom-select.open').forEach(s => s.classList.remove('open'));
+  });
+
+  // ── Visitor tracking & room count (Render backend) ──
+  async function initVisitorTracking() {
+    let sessId = sessionStorage.getItem('nova:session_id');
+    if (!sessId) {
+      sessId = 'sess_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+      sessionStorage.setItem('nova:session_id', sessId);
+    }
+
+    async function ping() {
+      try {
+        const res = await fetch('/api/visitors/ping', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessId })
+        });
+        if (res.ok) {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const data = await res.json();
+            const countEl = document.getElementById('now-visitor-count');
+            if (countEl && typeof data.live_count !== 'undefined') {
+              countEl.textContent = data.live_count;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Visitor ping failed", e);
+      }
+    }
+
+    const domainEl = document.getElementById('now-visitor-domain');
+    if (domainEl) {
+      domainEl.textContent = `how many people are currently on ${window.location.hostname || 'supernova'}`;
+    }
+
+    ping();
+    setInterval(ping, 120000);
+  }
+
+  // ── Discord + Spotify — single shared Lanyard fetch ──
+  async function loadLanyard(discordId, config) {
+    const activityEl = document.getElementById('now-discord-activity');
+    const tagEl = document.getElementById('now-discord-tag');
+    const spotifyEl = document.getElementById('now-spotify-playing');
+    const spotifyMeta = document.getElementById('now-spotify-meta');
+
+    const setDiscordFallback = () => {
+      if (!activityEl) return;
+      const customFallback = config && config['discord:fallback'];
+      activityEl.innerHTML = customFallback
+        ? (window.NovaMark ? window.NovaMark.parse(customFallback) : customFallback)
+        : 'got no activity running rn';
+    };
+
+    const setSpotifyFallback = () => {
+      if (!spotifyEl) return;
+      const defaultListening = config['now:listening'] || "nothing playing on spotify at the moment.";
+      const defaultListeningMeta = config['now:listening_meta'] || "on repeat";
+      spotifyEl.innerHTML = window.NovaMark ? window.NovaMark.parse(defaultListening) : defaultListening;
+      if (spotifyMeta) spotifyMeta.textContent = defaultListeningMeta;
+    };
+
+    if (!discordId || discordId === 'your-handle' || discordId === '') {
+      setDiscordFallback();
+      setSpotifyFallback();
+      return;
+    }
+
+    let json;
+    try {
+      const res = await fetch(`https://api.lanyard.rest/v1/users/${discordId}`);
+      if (!res.ok) throw new Error('lanyard not ok');
+      json = await res.json();
+      if (!json.success || !json.data) throw new Error('lanyard no data');
+    } catch (e) {
+      console.warn("Lanyard fetch failed", e);
+      setDiscordFallback();
+      setSpotifyFallback();
+      return;
+    }
+
+    const data = json.data;
+
+    // Discord status + activity
+    const status = data.discord_status;
+    let statusColor = 'rgba(255,255,255,0.25)';
+    if (status === 'online') statusColor = '#10b981';
+    if (status === 'idle') statusColor = '#f59e0b';
+    if (status === 'dnd') statusColor = '#ff5252';
+
+    if (tagEl) {
+      tagEl.textContent = status;
+      tagEl.style.color = statusColor;
+    }
+
+    const activities = data.activities || [];
+    const gameActivity = activities.find(a => a.type === 0 || a.type === 1 || a.type === 3 || a.type === 5);
+    const customStatus = activities.find(a => a.type === 4);
+
+    if (activityEl) {
+      if (gameActivity) {
+        let text = `playing {bold:${gameActivity.name}}`;
+        if (gameActivity.details) text += ` · ${gameActivity.details}`;
+        if (gameActivity.state) text += ` (${gameActivity.state})`;
+        activityEl.innerHTML = window.NovaMark ? window.NovaMark.parse(text) : text;
+      } else if (customStatus) {
+        const txt = `"${customStatus.state || customStatus.name}"`;
+        activityEl.innerHTML = window.NovaMark ? window.NovaMark.parse(txt) : txt;
+      } else if (status === 'offline') {
+        setDiscordFallback();
+      } else {
+        activityEl.textContent = 'active but idle';
+      }
+    }
+
+    // Spotify — same Lanyard payload, no second fetch
+    if (data.listening_to_spotify && data.spotify) {
+      const spot = data.spotify;
+      let html = `listening to {bold:${spot.song}} <span style="opacity: 0.45">by</span> {highlight:${spot.artist}}`;
+      if (spotifyEl) {
+        spotifyEl.innerHTML = window.NovaMark ? window.NovaMark.parse(html) : html;
+      }
+      if (spotifyMeta) {
+        spotifyMeta.textContent = spot.album ? `on spotify · ${spot.album}` : 'on spotify';
+      }
+    } else {
+      setSpotifyFallback();
+    }
+  }
+
+  // ── Presence State (Render backend) ──
+  async function updatePresenceStatus(config) {
+    try {
+      const res = await fetch('/api/status');
+      if (res.ok) {
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          const status = data.status || 'offline';
+
+          let color = '#ff5252';
+          let label = 'do not disturb';
+          let badge = 'desktop';
+
+          if (status === 'online') {
+            color = '#10b981';
+            label = 'online';
+            badge = 'active';
+          } else if (status === 'idle') {
+            color = '#f59e0b';
+            label = 'idle';
+            badge = 'away';
+          } else if (status === 'offline') {
+            color = 'rgba(255,255,255,0.25)';
+            label = 'offline';
+            badge = 'asleep';
+          }
+
+          const customText = config['hero:status_text'];
+          const customSub = config['hero:status_subtext'];
+
+          document.querySelectorAll('.status-dot, .nav-status-dot').forEach(el => {
+            el.style.background = color;
+            el.style.boxShadow = `0 0 10px ${color}`;
+          });
+
+          const mainText = customText || label;
+          document.querySelectorAll('.status-text').forEach(el => {
+            el.textContent = mainText;
+          });
+
+          const mainSubtext = customSub || (status === 'offline' ? 'not active on the dashboard right now' : 'probably doing nothing.\nor maybe something');
+          document.querySelectorAll('.status-subtext').forEach(el => {
+            el.innerHTML = mainSubtext.replace(/\n/g, '<br>');
+          });
+
+          const badgeEl = document.getElementById('now-status-badge');
+          if (badgeEl) {
+            badgeEl.textContent = badge;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Status fetch failed", e);
+    }
+  }
+
+  // ── Render pinned projects (home page) ──
+  function renderPinnedProjects(projects) {
+    const container = document.getElementById('pinned-project-list');
+    if (!container) return;
+
+    const pinned = projects.filter(p => p.pinned);
+
+    if (pinned.length === 0) {
+      container.innerHTML = '<div class="project-desc" style="padding: 1.5rem 0;">no pinned projects yet.</div>';
+      return;
+    }
+
+    container.innerHTML = pinned.map(p => `
+      <div class="project-item glow-target">
+        <div class="project-info">
+          <div class="project-name">${escapeHTML(p.name)}</div>
+          <div class="project-desc">${escapeHTML(p.desc)}</div>
+          <div class="project-stack">
+            ${(p.stack || []).map(s => `<span class="stack-pill">${escapeHTML(s)}</span>`).join('')}
+          </div>
+        </div>
+        ${p.link ? `<a href="${escapeHTML(p.link)}" class="project-link" target="_blank" rel="noopener">↗ view</a>` : ''}
+      </div>
+    `).join('');
+
+    container.querySelectorAll('.project-item').forEach(bindGlow);
+  }
+
+  // ── Render socials ──
+  function renderSocials(socials) {
+    const container = document.getElementById('socials-list-container');
+    if (!container) return;
+
+    if (!socials || socials.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = socials.map(s => `
+      <a href="${escapeHTML(s.url)}" class="social-item" target="_blank" rel="noopener">
+        <span class="social-platform">${escapeHTML(s.platform)}</span>
+        <span class="social-handle">${escapeHTML(s.handle)}</span>
+        <span class="social-arrow" aria-hidden="true">→</span>
+      </a>
+    `).join('');
+  }
+
+  function escapeHTML(str) {
+    if (str === undefined || str === null) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // ── Load static content (data/config.json + data/projects.json) ──
+  async function loadStaticData() {
+    let config = {};
+    let projects = [];
+
+    try {
+      const res = await fetch('/data/config.json');
+      if (res.ok) config = await res.json();
+    } catch (e) {
+      console.warn("config.json load failed:", e);
+    }
+
+    try {
+      const res = await fetch('/data/projects.json');
+      if (res.ok) projects = await res.json();
+    } catch (e) {
+      console.warn("projects.json load failed:", e);
+    }
+
+    // Presence + hero status text (still live via Render)
+    await updatePresenceStatus(config);
+
+    // Discord + Spotify — one shared Lanyard fetch
+    loadLanyard(config['discord:id'], config);
+    setInterval(() => loadLanyard(config['discord:id'], config), 45000);
+
+    // About body (NovaMark)
+    const parse = window.NovaMark ? window.NovaMark.parse : (t) => t;
+    const aboutBody = config['about:body'];
+    if (aboutBody && document.getElementById('about-body-main')) {
+      document.getElementById('about-body-main').innerHTML = parse(aboutBody);
+    }
+
+    // Tags
+    const tagsContainer = document.getElementById('about-tags-container');
+    if (tagsContainer) {
+      const tags = Array.isArray(config['tags']) ? config['tags'] : [];
+      tagsContainer.innerHTML = '';
+      tags.forEach(tag => {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.setAttribute('role', 'listitem');
+        span.textContent = tag;
+        tagsContainer.appendChild(span);
+      });
+    }
+
+    // Socials
+    renderSocials(config['socials']);
+
+    // Pinned projects
+    renderPinnedProjects(projects);
+
+    // Current project card
+    const projectName = config['now:project_name'] || '';
+    const projectDesc = config['now:project_desc'] || '';
+    const projectUrl  = config['now:project_url']  || '';
+    const projectStatus = config['now:project_status'] || '';
+    const nameEl   = document.getElementById('now-project-name');
+    const descEl   = document.getElementById('now-project-desc');
+    const statusEl = document.getElementById('now-project-status');
+    const linkEl   = document.getElementById('now-project-link');
+    if (nameEl)   nameEl.textContent   = projectName || 'nothing here yet';
+    if (descEl)   descEl.textContent   = projectDesc;
+    if (statusEl) statusEl.textContent = projectStatus;
+    if (statusEl) statusEl.style.display = projectStatus ? '' : 'none';
+    if (linkEl) {
+      if (projectUrl) {
+        linkEl.href  = projectUrl;
+        linkEl.style.cursor = 'pointer';
+      } else {
+        linkEl.removeAttribute('href');
+        linkEl.style.cursor = 'default';
+      }
+    }
+  }
+
+  // Run on load
+  initVisitorTracking();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadStaticData);
+  } else {
+    loadStaticData();
+  }
+</script>
+
+  <script src="/nova/novamark.js"></script>
+  <script src="/js/oneko.js" data-cat="/js/oneko.gif"></script>
+  <script src="/js/cursor.js"></script>
+</body>
+</html>
