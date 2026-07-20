@@ -1,0 +1,12 @@
+/oblitus              /oblitus/oblitus.html    200
+/oblitus/stats        /oblitus/stats.html      200
+/oblitus/guestbook    /oblitus/guestbook.html  200
+/oblitus/ask          /oblitus/ask.html        200
+/oblitus/visitors     /oblitus/visitors.html   200
+/oblitus/console      /oblitus/console.html    200
+/oblitus/credits      /oblitus/credits.html    200
+/nova/panel           /nova/panel.html         200
+/nova/dashboard       /nova/dashboard.html     200
+/projects             /projects.html           200
+/404                  /404.html                200
+/*                    /404.html                404
