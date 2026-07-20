@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nova // dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap');
+
+  :root {
+    --black: #000000;
+    --dark-grey: #0a0a0b;
+    --card-bg: rgba(20, 20, 22, 0.6);
+    --white: #f0ede8;
+    --dim: rgba(255,255,255,0.4);
+    --dimmer: rgba(255,255,255,0.1);
+    --border: rgba(255,255,255,0.06);
+    --glow-soft: 0 0 18px rgba(255,255,255,0.05);
+    --accent-red: #ff5252;
+    --accent-green: #10b981;
+    --accent-amber: #f59e0b;
+    --font-sans: 'Inter', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+  * { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.15) var(--black); }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9990;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    opacity: .5;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 500;
+  }
+
+  .header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.2rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .brand-group { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    text-transform: lowercase;
+    text-decoration: none;
+    color: var(--white);
+  }
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+
+  .user-controls { display: flex; align-items: center; gap: 16px; }
+  .user-name { font-family: var(--font-mono); font-size: 11px; color: var(--dim); }
+  .btn-logout {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--dim);
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-logout:hover { color: var(--white); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 5vw 6rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  @media (min-width: 900px) {
+    main { grid-template-columns: 2.5fr 1fr; }
+  }
+
+  .card {
+    background: var(--dark-grey);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: var(--glow-soft);
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 1.5rem;
+    text-transform: lowercase;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.75rem;
+  }
+  .card-title-mono { font-family: var(--font-mono); font-size: 11px; color: var(--dim); letter-spacing: 0.05em; }
+
+  .form-group { margin-bottom: 1.5rem; }
+  .form-row { display: grid; grid-template-columns: 1fr; gap: 1.2rem; margin-bottom: 1.5rem; }
+  @media (min-width: 600px) { .form-row { grid-template-columns: 1fr 1fr; } }
+
+  label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  label .required-mark { color: var(--accent-red); margin-left: 4px; }
+
+  input[type="text"], textarea, select {
+    width: 100%;
+    background: rgba(255,255,255,0.01);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    color: var(--white);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.03);
+  }
+  input.field-invalid, textarea.field-invalid {
+    border-color: var(--accent-red);
+  }
+
+  textarea { resize: vertical; min-height: 100px; }
+  .textarea-markdown { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; min-height: 200px; }
+
+  .field-help { font-family: var(--font-mono); font-size: 9px; color: rgba(255,255,255,0.22); margin-top: 0.3rem; }
+  .field-error { font-family: var(--font-mono); font-size: 9px; color: var(--accent-red); margin-top: 0.3rem; }
+
+  .preview-box {
+    background: rgba(255,255,255,0.01);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.25rem;
+    font-size: 13px;
+    color: var(--white);
+    min-height: 60px;
+    white-space: pre-wrap;
+    margin-top: 0.75rem;
+  }
+
+  /* toggle switch */
+  .toggle-row { display: flex; align-items: center; gap: 10px; }
+  .toggle-switch {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch.on { background: var(--accent-green); }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    background: var(--white);
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .toggle-switch.on::after { transform: translateX(18px); }
+  .toggle-label { font-family: var(--font-mono); font-size: 11px; color: var(--dim); }
+
+  /* repeatable card list (socials, projects) */
+  .repeat-list { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem; }
+  .repeat-item {
+    background: rgba(255,255,255,0.015);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    position: relative;
+  }
+  .repeat-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .repeat-item-index {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .btn-remove {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    background: transparent;
+    border: 1px solid rgba(255, 82, 82, 0.3);
+    color: var(--accent-red);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-remove:hover { background: rgba(255, 82, 82, 0.1); border-color: var(--accent-red); }
+
+  .btn-add {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: transparent;
+    border: 1px dashed rgba(255,255,255,0.2);
+    color: var(--dim);
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.2s;
+  }
+  .btn-add:hover { color: var(--white); border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.02); }
+
+  .pinned-toggle-row { display: flex; align-items: center; gap: 10px; margin-top: 0.5rem; }
+
+  .btn-primary {
+    background: var(--white);
+    color: var(--black);
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(255,255,255,0.15); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--dim);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { color: var(--white); border-color: rgba(255,255,255,0.2); }
+
+  .save-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .save-status {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .save-status.phase-error { color: var(--accent-red); }
+  .save-status.phase-success { color: var(--accent-green); }
+
+  /* usage tracker (unchanged) */
+  .usage-list { display: flex; flex-direction: column; gap: 1.25rem; }
+  .usage-item { display: flex; flex-direction: column; gap: 0.4rem; }
+  .usage-meta { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; }
+  .usage-name { color: var(--white); }
+  .usage-stats { color: var(--dim); }
+  .usage-bar-bg { width: 100%; height: 4px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
+  .usage-bar { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+  .bar-white { background: var(--white); }
+  .bar-amber { background: var(--accent-amber); }
+  .bar-red { background: var(--accent-red); }
+
+  /* confirm modal */
+  #modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  #modal-overlay.show { opacity: 1; pointer-events: all; }
+
+  .modal-card {
+    background: var(--dark-grey);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    transform: translateY(10px) scale(0.98);
+    transition: transform 0.2s ease;
+  }
+  #modal-overlay.show .modal-card { transform: translateY(0) scale(1); }
+
+  .modal-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 0.75rem;
+  }
+  .modal-message {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.6;
+    margin-bottom: 1.75rem;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+  .btn-danger {
+    background: var(--accent-red);
+    color: var(--white);
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-danger:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(255,82,82,0.3); }
+
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--dark-grey);
+    border: 1px solid var(--border);
+    color: var(--white);
+    padding: 12px 24px;
+    border-radius: 6px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 420px;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast .toast-dot { width: 6px; height: 6px; background: var(--accent-green); border-radius: 50%; flex-shrink: 0; }
+
+  .inline-divider {
+    margin: 2rem auto;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.06) 15%, rgba(255,255,255,0.06) 85%, transparent);
+  }
+
+  .status-option-container { display: flex; gap: 12px; align-items: center; }
+  .status-circle-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .status-circle-select.selected { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.08); }
+  .status-circle-select .dot { width: 6px; height: 6px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-container">
+    <div class="brand-group">
+      <a href="/" class="logo">supernovæ</a>
+      <span class="badge">cms v2</span>
+    </div>
+    <div class="user-controls">
+      <span class="user-name" id="user-display">admin@supernova</span>
+      <button class="btn-logout" id="logout-btn">logout</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT COLUMN -->
+  <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+
+    <!-- LIVE STATUS AND HEARTBEAT -->
+    <div class="card">
+      <div class="card-title">
+        <span>site presence heartbeat</span>
+        <span class="card-title-mono">real-time sync</span>
+      </div>
+      <div class="form-group">
+        <label>presence state</label>
+        <div class="status-option-container">
+          <div class="status-circle-select" data-status="online">
+            <span class="dot" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
+            online
+          </div>
+          <div class="status-circle-select" data-status="idle">
+            <span class="dot" style="background: #f59e0b; box-shadow: 0 0 6px #f59e0b;"></span>
+            idle
+          </div>
+          <div class="status-circle-select" data-status="do not disturb">
+            <span class="dot" style="background: #ff5252; box-shadow: 0 0 6px #ff5252;"></span>
+            do not disturb
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 1.5rem; text-align: right;">
+        <button class="btn-primary" id="save-status-btn">sync heartbeat</button>
+      </div>
+      <div class="field-help" style="margin-top: 0.75rem;">not wired to a live backend endpoint yet — placeholder.</div>
+    </div>
+
+    <!-- SITE CONFIG (schema-driven, data/config.json) -->
+    <div class="card">
+      <div class="card-title">
+        <span>site config</span>
+        <span class="card-title-mono">data/config.json</span>
+      </div>
+      <div id="config-form"></div>
+      <div class="save-row">
+        <div style="display:flex; gap: 0.75rem;">
+          <button class="btn-primary" id="save-config-btn">save config.json</button>
+          <button class="btn-secondary" id="restore-config-btn">restore from backup</button>
+        </div>
+        <div class="save-status" id="config-save-status"></div>
+      </div>
+    </div>
+
+    <!-- PROJECTS (schema-driven, data/projects.json) -->
+    <div class="card">
+      <div class="card-title">
+        <span>projects</span>
+        <span class="card-title-mono">data/projects.json</span>
+      </div>
+      <div id="projects-form"></div>
+      <button class="btn-add" id="add-project-btn" style="margin-top: 0.5rem;">+ add project</button>
+      <div class="save-row">
+        <div style="display:flex; gap: 0.75rem;">
+          <button class="btn-primary" id="save-projects-btn">save projects.json</button>
+          <button class="btn-secondary" id="restore-projects-btn">restore from backup</button>
+        </div>
+        <div class="save-status" id="projects-save-status"></div>
+      </div>
+    </div>
+
+    <!-- ANONYMOUS QUESTIONS DESK -->
+    <div class="card">
+      <div class="card-title">
+        <span>oblitus inbox questions</span>
+        <span class="card-title-mono" id="questions-count">0 pending</span>
+      </div>
+      <div id="questions-container">
+        <div class="field-help" style="text-align: center; padding: 2rem;">not wired to a live backend endpoint yet — placeholder.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+    <div class="card">
+      <div class="card-title">
+        <span>api quota metrics</span>
+        <span class="badge" style="color: #ff5252;">live</span>
+      </div>
+      <div class="usage-list" id="usage-list">
+        <div class="field-help">not wired to a live backend endpoint yet — placeholder.</div>
+      </div>
+    </div>
+
+    <div class="card" style="font-family: var(--font-mono); font-size: 10px;">
+      <div class="card-title" style="font-family: var(--font-sans); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">
+        <span>security context</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; color: var(--dim);">
+        <div style="display: flex; justify-content: space-between;">
+          <span>role:</span>
+          <span style="color: var(--white);">developer_root</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>auth method:</span>
+          <span style="color: var(--white);" id="auth-method-display">token</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>status:</span>
+          <span style="color: var(--accent-green);">signed_in</span>
+        </div>
+        <div class="inline-divider" style="margin: 0.5rem 0;"></div>
+        <p style="font-size: 9px; line-height: 1.4;">
+          config/project saves validate against schema, back up the previous version, then commit directly to the repo. cloudflare pages redeploys automatically within seconds.
+        </p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast">
+  <div class="toast-dot"></div>
+  <span id="toast-text">System updated successfully</span>
+</div>
+
+<div id="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-title" id="modal-title">Confirm action</div>
+    <div class="modal-message" id="modal-message">Are you sure?</div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="modal-cancel-btn">cancel</button>
+      <button class="btn-danger" id="modal-confirm-btn">confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="/nova/novamark.js"></script>
+<script>
+  // ── CONFIG ─────────────────────────────────────────────────────────────────
+  // Update this once the Render backend is deployed.
+  const CMS_API_BASE = window.CMS_API_BASE || "https://REPLACE-WITH-RENDER-URL.onrender.com";
+
+  // Auth enforcement
+  const token = localStorage.getItem('nova:session:token');
+  if (!token) {
+    const params = new URLSearchParams(window.location.search);
+    const queryToken = params.get('token');
+    if (queryToken) {
+      localStorage.setItem('nova:session:token', queryToken);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      window.location.reload();
+    } else {
+      window.location.href = '/nova/panel';
+    }
+  }
+
+  document.getElementById('user-display').textContent = 'nova_admin';
+  document.getElementById('auth-method-display').textContent = 'github_oauth';
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    try {
+      await fetch(`${CMS_API_BASE}/nova/auth/logout`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+    } catch(e) {}
+    localStorage.removeItem('nova:session:token');
+    window.location.href = '/nova/panel';
+  });
+
+  function showToast(text, isError = false) {
+    const toast = document.getElementById('toast');
+    const dot = toast.querySelector('.toast-dot');
+    toast.querySelector('#toast-text').textContent = text;
+    dot.style.background = isError ? 'var(--accent-red)' : 'var(--accent-green)';
+    toast.classList.add('show');
+    setTimeout(() => { toast.classList.remove('show'); }, 4000);
+  }
+
+  // ── styled confirm modal (replaces window.confirm) ──
+  function confirmModal(title, message) {
+    const overlay = document.getElementById('modal-overlay');
+    const titleEl = document.getElementById('modal-title');
+    const messageEl = document.getElementById('modal-message');
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+    const cancelBtn = document.getElementById('modal-cancel-btn');
+
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    overlay.classList.add('show');
+
+    return new Promise((resolve) => {
+      function cleanup(result) {
+        overlay.classList.remove('show');
+        confirmBtn.removeEventListener('click', onConfirm);
+        cancelBtn.removeEventListener('click', onCancel);
+        overlay.removeEventListener('click', onOverlayClick);
+        document.removeEventListener('keydown', onKeydown);
+        resolve(result);
+      }
+      function onConfirm() { cleanup(true); }
+      function onCancel() { cleanup(false); }
+      function onOverlayClick(e) { if (e.target === overlay) cleanup(false); }
+      function onKeydown(e) { if (e.key === 'Escape') cleanup(false); }
+
+      confirmBtn.addEventListener('click', onConfirm);
+      cancelBtn.addEventListener('click', onCancel);
+      overlay.addEventListener('click', onOverlayClick);
+      document.addEventListener('keydown', onKeydown);
+    });
+  }
+
+  function escapeHTML(str) {
+    if (str === undefined || str === null) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ── SCHEMA-DRIVEN FORM ENGINE ─────────────────────────────────────────────
+  // Renders inputs bound directly to a mutable draft object/array.
+  // No virtual DOM — each input's change handler writes straight into draft.
+
+  function isObjectItemsSchema(items) {
+    return items && typeof items === 'object' && !items.type;
+  }
+
+  /** Builds one labeled field for a scalar/array value inside an object form. */
+  function buildField(key, fieldSchema, draft, onDirty) {
+    const wrap = document.createElement('div');
+    wrap.className = 'form-group';
+
+    const label = document.createElement('label');
+    label.textContent = key;
+    if (fieldSchema.required) {
+      const req = document.createElement('span');
+      req.className = 'required-mark';
+      req.textContent = '*';
+      label.appendChild(req);
+    }
+    wrap.appendChild(label);
+
+    const errorEl = document.createElement('div');
+    errorEl.className = 'field-error';
+    errorEl.style.display = 'none';
+
+    if (fieldSchema.type === 'novamark') {
+      const textarea = document.createElement('textarea');
+      textarea.className = 'textarea-markdown';
+      textarea.value = draft[key] || '';
+      const preview = document.createElement('div');
+      preview.className = 'preview-box';
+      const renderPreview = () => {
+        preview.innerHTML = window.NovaMark ? window.NovaMark.parse(textarea.value) : escapeHTML(textarea.value);
+      };
+      textarea.addEventListener('input', () => {
+        draft[key] = textarea.value;
+        renderPreview();
+        onDirty();
+      });
+      renderPreview();
+      wrap.appendChild(textarea);
+      const helpLabel = document.createElement('div');
+      helpLabel.className = 'field-help';
+      helpLabel.textContent = 'NovaMark: {bold:text}, {highlight:text}, {muted:text}, {link:label|url}, {tag:label}, {divider}, {break}';
+      wrap.appendChild(helpLabel);
+      const previewLabel = document.createElement('label');
+      previewLabel.style.marginTop = '0.5rem';
+      previewLabel.style.fontSize = '9px';
+      previewLabel.textContent = 'live preview';
+      wrap.appendChild(previewLabel);
+      wrap.appendChild(preview);
+      wrap.appendChild(errorEl);
+      return { el: wrap, errorEl, focusInput: textarea };
+    }
+
+    if (fieldSchema.type === 'boolean') {
+      const row = document.createElement('div');
+      row.className = 'toggle-row';
+      const toggle = document.createElement('div');
+      toggle.className = 'toggle-switch' + (draft[key] ? ' on' : '');
+      toggle.addEventListener('click', () => {
+        draft[key] = !draft[key];
+        toggle.classList.toggle('on', !!draft[key]);
+        onDirty();
+      });
+      const toggleLabel = document.createElement('span');
+      toggleLabel.className = 'toggle-label';
+      toggleLabel.textContent = draft[key] ? 'true' : 'false';
+      toggle.addEventListener('click', () => { toggleLabel.textContent = draft[key] ? 'true' : 'false'; });
+      row.appendChild(toggle);
+      row.appendChild(toggleLabel);
+      wrap.appendChild(row);
+      wrap.appendChild(errorEl);
+      return { el: wrap, errorEl, focusInput: toggle };
+    }
+
+    if (fieldSchema.type === 'array' && !isObjectItemsSchema(fieldSchema.items)) {
+      // simple string array -> comma separated text input
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = Array.isArray(draft[key]) ? draft[key].join(', ') : '';
+      input.placeholder = 'comma, separated, values';
+      input.addEventListener('input', () => {
+        draft[key] = input.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        onDirty();
+      });
+      wrap.appendChild(input);
+      const helpLabel = document.createElement('div');
+      helpLabel.className = 'field-help';
+      helpLabel.textContent = 'comma-separated list';
+      wrap.appendChild(helpLabel);
+      wrap.appendChild(errorEl);
+      return { el: wrap, errorEl, focusInput: input };
+    }
+
+    if (fieldSchema.type === 'array' && isObjectItemsSchema(fieldSchema.items)) {
+      // array of objects (e.g. socials) -> repeatable card list
+      if (!Array.isArray(draft[key])) draft[key] = [];
+      const listWrap = buildRepeatList(fieldSchema.items, draft[key], onDirty, () => Object.fromEntries(Object.keys(fieldSchema.items).map(k => [k, ''])));
+      wrap.appendChild(listWrap);
+      wrap.appendChild(errorEl);
+      return { el: wrap, errorEl, focusInput: null };
+    }
+
+    // default: plain string/number text input
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = draft[key] !== undefined && draft[key] !== null ? draft[key] : '';
+    input.addEventListener('input', () => {
+      draft[key] = fieldSchema.type === 'number' ? Number(input.value) : input.value;
+      onDirty();
+    });
+    wrap.appendChild(input);
+    wrap.appendChild(errorEl);
+    return { el: wrap, errorEl, focusInput: input };
+  }
+
+  /** Builds a repeatable list of object-cards (e.g. socials, projects). */
+  function buildRepeatList(itemsSchema, dataArray, onDirty, makeEmptyItem) {
+    const container = document.createElement('div');
+    container.className = 'repeat-list';
+
+    function render() {
+      container.innerHTML = '';
+      dataArray.forEach((item, i) => {
+        const card = document.createElement('div');
+        card.className = 'repeat-item';
+
+        const header = document.createElement('div');
+        header.className = 'repeat-item-header';
+        const idxLabel = document.createElement('span');
+        idxLabel.className = 'repeat-item-index';
+        idxLabel.textContent = `#${i + 1}`;
+        header.appendChild(idxLabel);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'btn-remove';
+        removeBtn.type = 'button';
+        removeBtn.textContent = 'remove';
+        removeBtn.addEventListener('click', () => {
+          dataArray.splice(i, 1);
+          onDirty();
+          render();
+        });
+        header.appendChild(removeBtn);
+        card.appendChild(header);
+
+        Object.entries(itemsSchema).forEach(([subKey, subFieldSchema]) => {
+          const field = buildField(subKey, subFieldSchema, item, onDirty);
+          card.appendChild(field.el);
+        });
+
+        container.appendChild(card);
+      });
+    }
+
+    render();
+    container._render = render;
+    return container;
+  }
+
+  // ── CONFIG.JSON FORM ────────────────────────────────────────────────────
+
+  let configDraft = {};
+  let configSchema = null;
+  let configDirty = false;
+
+  function renderConfigForm() {
+    const container = document.getElementById('config-form');
+    container.innerHTML = '';
+    if (!configSchema) return;
+
+    Object.entries(configSchema.fields).forEach(([key, fieldSchema]) => {
+      const field = buildField(key, fieldSchema, configDraft, () => { configDirty = true; });
+      container.appendChild(field.el);
+    });
+  }
+
+  async function loadConfig() {
+    try {
+      const [dataRes, schemaRes] = await Promise.all([
+        fetch('/data/config.json'),
+        fetch('/schema/config.schema.json'),
+      ]);
+      configDraft = await dataRes.json();
+      configSchema = await schemaRes.json();
+      renderConfigForm();
+    } catch (e) {
+      console.error('Failed to load config.json/schema:', e);
+      document.getElementById('config-form').innerHTML = '<div class="field-error">failed to load config.json or its schema.</div>';
+    }
+  }
+
+  function setSaveStatus(elId, phase, isError) {
+    const el = document.getElementById(elId);
+    el.textContent = phase;
+    el.className = 'save-status' + (isError ? ' phase-error' : (phase === 'done' ? ' phase-success' : ''));
+  }
+
+  async function saveFile(fileKey, draft, statusElId) {
+    setSaveStatus(statusElId, 'validating...', false);
+    try {
+      const res = await fetch(`${CMS_API_BASE}/api/dashboard/save/${fileKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token,
+        },
+        body: JSON.stringify({ data: draft }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setSaveStatus(statusElId, 'done — deploying...', false);
+        showToast(`${fileKey}.json saved successfully`);
+      } else {
+        setSaveStatus(statusElId, `stopped at "${result.phase}": ${result.error}`, true);
+        showToast(`save failed at ${result.phase}`, true);
+      }
+    } catch (e) {
+      setSaveStatus(statusElId, `network error: ${e.message}`, true);
+      showToast('save failed — network error', true);
+    }
+  }
+
+  async function restoreFile(fileKey, statusElId, reload) {
+    const confirmed = await confirmModal(
+      `Restore ${fileKey}.json?`,
+      `This overwrites the current live ${fileKey}.json with its last backup. This can't be undone from here.`
+    );
+    if (!confirmed) return;
+
+    setSaveStatus(statusElId, 'restoring...', false);
+    try {
+      const res = await fetch(`${CMS_API_BASE}/api/dashboard/restore/${fileKey}`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+      });
+      const result = await res.json();
+      if (result.success) {
+        setSaveStatus(statusElId, 'restored', false);
+        showToast(`${fileKey}.json restored from backup`);
+        await reload();
+      } else {
+        setSaveStatus(statusElId, `stopped at "${result.phase}": ${result.error}`, true);
+        showToast(`restore failed at ${result.phase}`, true);
+      }
+    } catch (e) {
+      setSaveStatus(statusElId, `network error: ${e.message}`, true);
+      showToast('restore failed — network error', true);
+    }
+  }
+
+  document.getElementById('save-config-btn').addEventListener('click', () => saveFile('config', configDraft, 'config-save-status'));
+  document.getElementById('restore-config-btn').addEventListener('click', () => restoreFile('config', 'config-save-status', loadConfig));
+
+  // ── PROJECTS.JSON FORM ───────────────────────────────────────────────────
+
+  let projectsDraft = [];
+  let projectsSchema = null;
+
+  function renderProjectsForm() {
+    const container = document.getElementById('projects-form');
+    container.innerHTML = '';
+    if (!projectsSchema) return;
+
+    const listWrap = buildRepeatList(projectsSchema.items, projectsDraft, () => {}, () => {
+      const nextId = projectsDraft.length > 0 ? Math.max(...projectsDraft.map(p => p.id || 0)) + 1 : 1;
+      return { id: nextId, name: '', desc: '', stack: [], link: '', pinned: false };
+    });
+    container.appendChild(listWrap);
+  }
+
+  async function loadProjects() {
+    try {
+      const [dataRes, schemaRes] = await Promise.all([
+        fetch('/data/projects.json'),
+        fetch('/schema/projects.schema.json'),
+      ]);
+      projectsDraft = await dataRes.json();
+      projectsSchema = await schemaRes.json();
+      renderProjectsForm();
+    } catch (e) {
+      console.error('Failed to load projects.json/schema:', e);
+      document.getElementById('projects-form').innerHTML = '<div class="field-error">failed to load projects.json or its schema.</div>';
+    }
+  }
+
+  document.getElementById('add-project-btn').addEventListener('click', () => {
+    const nextId = projectsDraft.length > 0 ? Math.max(...projectsDraft.map(p => p.id || 0)) + 1 : 1;
+    projectsDraft.push({ id: nextId, name: '', desc: '', stack: [], link: '', pinned: false });
+    renderProjectsForm();
+  });
+
+  document.getElementById('save-projects-btn').addEventListener('click', () => saveFile('projects', projectsDraft, 'projects-save-status'));
+  document.getElementById('restore-projects-btn').addEventListener('click', () => restoreFile('projects', 'projects-save-status', loadProjects));
+
+  // ── Presence state selector (UI only — not wired to a live endpoint yet) ──
+  document.querySelectorAll('.status-circle-select').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.status-circle-select').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+    });
+  });
+
+  // ── Initial loads ────────────────────────────────────────────────────────
+  loadConfig();
+  loadProjects();
+</script>
+</body>
+</html>
