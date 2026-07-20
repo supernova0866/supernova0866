@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>oblitus // supernova</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg-color: #000000;
+    --card-bg: rgba(255, 255, 255, 0.02);
+    --border-color: rgba(255, 255, 255, 0.05);
+    --white: #f0ede8;
+    --accent: #ffffff;
+    --font-sans: 'Inter', sans-serif;
+    --font-mono: 'DM Mono', 'Courier New', monospace;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) #000000;
+  }
+
+  body {
+    background-color: var(--bg-color);
+    color: var(--white);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    cursor: default;
+  }
+
+  /* Core container setup */
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 4rem 5vw 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Full screen cover for entrance sequence */
+  #intro-curtain {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-color);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    transition: opacity 0.8s ease;
+  }
+
+  #intro-curtain.fade-out {
+    opacity: 0;
+  }
+
+  .scramble-container {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .scramble-main {
+    font-family: var(--font-sans);
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: var(--accent);
+    text-transform: uppercase;
+    min-height: 5.5rem;
+  }
+
+  .scramble-sub {
+    font-family: var(--font-mono);
+    font-size: clamp(0.9rem, 3vw, 1.3rem);
+    color: rgba(255, 255, 255, 0.4);
+    min-height: 1.8rem;
+    letter-spacing: 0.1em;
+  }
+
+  /* Fade-in Content Grid */
+  .fade-in-content {
+    opacity: 0;
+    transform: translateY(15px);
+    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .fade-in-content.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Section Header */
+  .header-area {
+    margin-bottom: 3.5rem;
+    position: relative;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: .25em;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 2.7rem);
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    text-transform: lowercase;
+  }
+
+  .discovery-banner {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: rgba(240, 237, 232, 0.65);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 3rem;
+  }
+
+  .discovery-banner span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .discovery-banner .dot {
+    width: 6px;
+    height: 6px;
+    background-color: #10b981;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+  }
+
+  /* Directory Listing Navigation */
+  .dir-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 4rem;
+  }
+
+  @media (min-width: 600px) {
+    .dir-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .dir-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s, transform 0.25s;
+    backdrop-filter: blur(8px);
+  }
+
+  .dir-card:hover {
+    border-color: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+  }
+
+  .dir-icon {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.35);
+    margin-bottom: 0.75rem;
+  }
+
+  .dir-card:hover .dir-icon {
+    color: var(--accent);
+  }
+
+  .dir-name {
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.4rem;
+    color: var(--white);
+  }
+
+  .dir-desc {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.45);
+    line-height: 1.4;
+  }
+
+  /* Full width divider */
+  .full-width-divider {
+    width: 100vw;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+
+  /* Canvas Section */
+  .canvas-container {
+    width: 100vw;
+    height: 45vh;
+    min-height: 300px;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  .canvas-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .canvas-hint {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.2);
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* Footer */
+  .page-footer {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 5vw;
+    font-family: var(--font-sans);
+  }
+
+  .footer-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .footer-sign-name {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-size: 1.1rem;
+    text-transform: lowercase;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .footer-link {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-link:hover {
+    color: var(--white);
+  }
+
+  .footer-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    justify-content: space-between;
+  }
+
+  @media (min-width: 600px) {
+    .footer-bottom {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+  }
+
+  .footer-copy {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    line-height: 1.5;
+  }
+
+  /* Custom selects */
+  .footer-cursor-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .footer-cursor-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .footer-cursor-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .custom-select {
+    position: relative;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    width: 120px;
+  }
+
+  .custom-select-trigger {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    padding: 4px 10px;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .custom-select-trigger:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--white);
+  }
+
+  .custom-select-options {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    right: 0;
+    background: #111112;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    width: 100%;
+    z-index: 100;
+    display: none;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
+  }
+
+  .custom-select.open .custom-select-options {
+    display: block;
+  }
+
+  .custom-select-option {
+    padding: 4px 10px;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .custom-select-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--white);
+  }
+
+  .custom-select-option.selected {
+    color: var(--white);
+    background: rgba(255, 255, 255, 0.08);
+  }
+</style>
+</head>
+<body>
+
+<!-- Secret Entrance Animation Curtain -->
+<div id="intro-curtain">
+  <div class="scramble-container">
+    <div class="scramble-main" id="scramble-title"></div>
+    <div class="scramble-sub" id="scramble-subtitle"></div>
+  </div>
+</div>
+
+<main class="fade-in-content" id="content-container">
+  <div class="header-area">
+    <div class="section-label">oblitus</div>
+    <h2 class="section-title">welcome to the underground</h2>
+    
+    <div class="discovery-banner">
+      <span id="discovery-stat">
+        <span class="dot"></span>
+        initializing discovery records...
+      </span>
+      <span id="live-stat" style="color: rgba(255,255,255,0.4);">
+        scanning user activity...
+      </span>
+    </div>
+  </div>
+
+  <!-- Secret Directory Listing -->
+  <div class="dir-grid">
+    <a href="/oblitus/stats" class="dir-card">
+      <span class="dir-icon">~/stats</span>
+      <span class="dir-name">stats</span>
+      <span class="dir-desc">GitHub repository analytics, detailed PAT metadata breakdown, and language ratios.</span>
+    </a>
+
+    <a href="/oblitus/guestbook" class="dir-card">
+      <span class="dir-icon">~/guestbook</span>
+      <span class="dir-name">guestbook</span>
+      <span class="dir-desc">Leave a trace of your IP, country coordinates, or custom memo in our legacy registry.</span>
+    </a>
+
+    <a href="/oblitus/ask" class="dir-card">
+      <span class="dir-icon">~/ask</span>
+      <span class="dir-name">ask</span>
+      <span class="dir-desc">Submit anonymous questions to the shadow system and view responses.</span>
+    </a>
+
+    <a href="/oblitus/visitors" class="dir-card">
+      <span class="dir-icon">~/visitors</span>
+      <span class="dir-name">visitors</span>
+      <span class="dir-desc">An interactive coordinate world map visualizing real-time geolocation hits.</span>
+    </a>
+
+    <a href="/oblitus/console" class="dir-card">
+      <span class="dir-icon">~/console</span>
+      <span class="dir-name">console</span>
+      <span class="dir-desc">Launch an interactive sandbox xterm.js terminal emulator with custom backend controls.</span>
+    </a>
+
+    <a href="/oblitus/credits" class="dir-card">
+      <span class="dir-icon">~/credits</span>
+      <span class="dir-name">credits</span>
+      <span class="dir-desc">Inspiration links, tool suites, structural guidelines, and credits page.</span>
+    </a>
+  </div>
+</main>
+
+<div class="full-width-divider"></div>
+
+<!-- Custom Particle Canvas Section -->
+<div class="canvas-container">
+  <canvas id="c"></canvas>
+</div>
+
+<div class="full-width-divider"></div>
+
+<footer class="page-footer" aria-label="Footer">
+  <div class="footer-top">
+    <div class="footer-sign">
+      <div class="footer-sign-name">nova</div>
+    </div>
+    <nav class="footer-links" aria-label="Footer links">
+      <a href="/" class="footer-link">main</a>
+      <a href="/oblitus" class="footer-link" style="color: var(--accent); font-weight: 500;">oblitus</a>
+    </nav>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 nova · built from scratch · no frameworks harmed</span>
+    <div class="footer-cursor-controls">
+      <div class="footer-cursor-row">
+        <span class="footer-cursor-label">cursor shape ↝</span>
+        <div class="custom-select" id="select-cursor" data-value="default">
+          <div class="custom-select-trigger">default</div>
+          <div class="custom-select-options">
+            <div class="custom-select-option selected" data-value="default">default</div>
+            <div class="custom-select-option" data-value="glow-circle">glow circle</div>
+            <div class="custom-select-option" data-value="tri-force">tri-force</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-cursor-row">
+        <span class="footer-cursor-label">follows cursor ↝</span>
+        <div class="custom-select" id="select-follower" data-value="cat">
+          <div class="custom-select-trigger">cat</div>
+          <div class="custom-select-options">
+            <div class="custom-select-option selected" data-value="cat">cat</div>
+            <div class="custom-select-option" data-value="calico">calico</div>
+            <div class="custom-select-option" data-value="dog">dog</div>
+            <div class="custom-select-option" data-value="eevee">eevee</div>
+            <div class="custom-select-option" data-value="ghost">ghost</div>
+            <div class="custom-select-option" data-value="fox">fox</div>
+            <div class="custom-select-option" data-value="none">none</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="/nova/devtools.js"></script>
+
+<!-- Scripts -->
+<script>
+  // Scramble effect helper
+  const chars = '01$@_/*%&!?#+=\[\]{}<>~▲▼○●◆◇';
+  function scramble(element, targetText, duration = 800, callback) {
+    let iteration = 0;
+    const interval = setInterval(() => {
+      element.innerText = targetText
+        .split("")
+        .map((char, index) => {
+          if (index < iteration) {
+            return targetText[index];
+          }
+          return chars[Math.floor(Math.random() * chars.length)];
+        })
+        .join("");
+      
+      if (iteration >= targetText.length) {
+        clearInterval(interval);
+        if (callback) callback();
+      }
+      iteration += targetText.length / (duration / 50);
+    }, 45);
+  }
+
+  // Sequence runner
+  window.addEventListener('DOMContentLoaded', () => {
+    const titleEl = document.getElementById('scramble-title');
+    const subEl = document.getElementById('scramble-subtitle');
+    const curtain = document.getElementById('intro-curtain');
+    const content = document.getElementById('content-container');
+
+    const hasEntered = sessionStorage.getItem('oblitus:entered') === 'true';
+
+    if (hasEntered) {
+      // Skip animation entirely and display content immediately
+      curtain.style.display = 'none';
+      content.style.transition = 'none';
+      content.classList.add('visible');
+      // Restore transition for any subsequent standard state animations
+      setTimeout(() => {
+        content.style.transition = '';
+      }, 50);
+    } else {
+      // First time in this session/tab - set session storage and run animation
+      sessionStorage.setItem('oblitus:entered', 'true');
+
+      // Step 1: Scramble $UPERNOVÆ
+      scramble(titleEl, '$UPERNOVÆ', 1000, () => {
+        // Step 2: Pause and scramble oblitus
+        setTimeout(() => {
+          scramble(subEl, 'oblitus', 800, () => {
+            // Step 3: Fade out curtain and fade in content
+            setTimeout(() => {
+              curtain.classList.add('fade-out');
+              content.classList.add('visible');
+              setTimeout(() => {
+                curtain.style.display = 'none';
+              }, 800);
+            }, 400);
+          });
+        }, 300);
+      });
+    }
+
+    // Check localStorage & POST /api/oblitus/found
+    // Stored value is the visitor's ordinal number; old code stored 'true' — detect & re-fetch
+    const raw     = localStorage.getItem('oblitus:found');
+    const storedN = raw ? parseInt(raw, 10) : NaN;
+    const hasValidN = !isNaN(storedN) && storedN > 0;
+    const countUrl = '/api/oblitus/count';
+    const foundUrl = '/api/oblitus/found';
+
+    if (!hasValidN) {
+      // First visit, or migrating from old 'true' value
+      localStorage.removeItem('oblitus:found');
+      fetch(foundUrl, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          localStorage.setItem('oblitus:found', String(data.n));
+          updateDiscoveryStats(data.n, data.x);
+        })
+        .catch(() => {
+          localStorage.setItem('oblitus:found', '42');
+          updateDiscoveryStats(42, 100);
+        });
+    } else {
+      fetch(countUrl)
+        .then(res => res.json())
+        .then(data => updateDiscoveryStats(storedN, data.x))
+        .catch(() => updateDiscoveryStats(storedN, 100));
+    }
+
+    // Ping visitor count
+    function pingPresence() {
+      // Create session id if not exists
+      let sessId = sessionStorage.getItem('nova:session:id');
+      if (!sessId) {
+        sessId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        sessionStorage.setItem('nova:session:id', sessId);
+      }
+
+      fetch('/api/visitors/ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const liveEl = document.getElementById('live-stat');
+        if (liveEl) {
+          liveEl.textContent = `${data.live_count} people active right now.`;
+        }
+      })
+      .catch(err => {
+        const liveEl = document.getElementById('live-stat');
+        if (liveEl) liveEl.textContent = "1 person active right now.";
+      });
+    }
+
+    pingPresence();
+    setInterval(pingPresence, 60000); // Ping every minute
+  });
+
+  function ordinal(n) {
+    const s = ['th','st','nd','rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+
+  function updateDiscoveryStats(n, x) {
+    const statEl = document.getElementById('discovery-stat');
+    if (!statEl) return;
+    statEl.innerHTML = `<span class="dot"></span> you were the <strong>${ordinal(n)}</strong> to discover oblitus, out of <strong>${x}</strong> explorers.`;
+  }
+
+  // --- Interactive Canvas Background ---
+  // Custom selector dropdown handlers
+  document.querySelectorAll('.custom-select').forEach(sel => {
+    const trigger = sel.querySelector('.custom-select-trigger');
+    const options = sel.querySelectorAll('.custom-select-option');
+
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      document.querySelectorAll('.custom-select.open').forEach(s => {
+        if (s !== sel) s.classList.remove('open');
+      });
+      sel.classList.toggle('open');
+    });
+
+    options.forEach(opt => {
+      opt.addEventListener('click', e => {
+        e.stopPropagation();
+        const val = opt.dataset.value;
+        sel.dataset.value = val;
+        trigger.textContent = opt.textContent;
+        options.forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        sel.classList.remove('open');
+
+        if (sel.id === 'select-cursor' && window.CursorJS) window.CursorJS.loadCursor(val);
+        if (sel.id === 'select-follower' && window.CursorJS) window.CursorJS.loadFollower(val);
+      });
+    });
+  });
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.custom-select.open').forEach(s => s.classList.remove('open'));
+  });
+</script>
+
+<script src="/canvas/loader.js"></script>
+<script src="/js/oneko.js" data-cat="/js/oneko.gif"></script>
+<script src="/js/cursor.js"></script>
+</body>
+</html>
