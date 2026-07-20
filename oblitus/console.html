@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>console // oblitus</title>
+<!-- xterm.js CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --bg-color: #000000;
+    --card-bg: rgba(255, 255, 255, 0.02);
+    --border-color: rgba(255, 255, 255, 0.05);
+    --white: #f0ede8;
+    --accent: #ffffff;
+    --font-sans: 'Inter', sans-serif;
+    --font-mono: 'DM Mono', 'Courier New', monospace;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) #000000;
+  }
+
+  body {
+    background-color: var(--bg-color);
+    color: var(--white);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 4rem 5vw 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Return header */
+  .back-link {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3rem;
+    transition: color 0.2s, transform 0.2s;
+    width: fit-content;
+  }
+
+  .back-link:hover {
+    color: var(--white);
+    transform: translateX(-3px);
+  }
+
+  /* Header Area */
+  .header-area {
+    margin-bottom: 2.5rem;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: .25em;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 5vw, 2.7rem);
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+    text-transform: lowercase;
+  }
+
+  .section-subtitle {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 2rem;
+  }
+
+  /* Terminal Card container */
+  .terminal-wrapper {
+    background: #000000;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .terminal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .terminal-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .terminal-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+
+  /* xterm fit adjust */
+  #terminal-container {
+    width: 100%;
+    min-height: 380px;
+  }
+
+  .xterm {
+    padding: 2px;
+  }
+
+  .xterm-viewport {
+    background-color: #000000 !important;
+  }
+
+  /* Full width divider */
+  .full-width-divider {
+    width: 100vw;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+  }
+
+  /* Canvas Section */
+  .canvas-container {
+    width: 100vw;
+    height: 40vh;
+    min-height: 250px;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  .canvas-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Footer */
+  .page-footer {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 5vw;
+    font-family: var(--font-sans);
+  }
+
+  .footer-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .footer-sign-name {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-size: 1.1rem;
+    text-transform: lowercase;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .footer-link {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-link:hover {
+    color: var(--white);
+  }
+
+  .footer-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    justify-content: space-between;
+  }
+
+  @media (min-width: 600px) {
+    .footer-bottom {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+  }
+
+  .footer-copy {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    line-height: 1.5;
+  }
+
+  /* Custom selects dropdown */
+  .footer-cursor-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .footer-cursor-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .footer-cursor-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .custom-select {
+    position: relative;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    width: 120px;
+  }
+
+  .custom-select-trigger {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    padding: 4px 10px;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .custom-select-trigger:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--white);
+  }
+
+  .custom-select-options {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    right: 0;
+    background: #111112;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    width: 100%;
+    z-index: 100;
+    display: none;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
+  }
+
+  .custom-select.open .custom-select-options {
+    display: block;
+  }
+
+  .custom-select-option {
+    padding: 4px 10px;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .custom-select-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--white);
+  }
+
+  .custom-select-option.selected {
+    color: var(--white);
+    background: rgba(255, 255, 255, 0.08);
+  }
+</style>
+</head>
+<body>
+
+<script>
+  if (!sessionStorage.getItem('oblitus:entered')) {
+    window.location.href = '/404';
+  }
+</script>
+
+<main>
+  <a href="/oblitus" class="back-link">← return to oblitus</a>
+
+  <div class="header-area">
+    <div class="section-label">sandbox</div>
+    <h2 class="section-title">network terminal</h2>
+    <p class="section-subtitle">direct shell access to mock sandbox controls</p>
+  </div>
+
+  <div class="terminal-wrapper">
+    <div class="terminal-header">
+      <div class="terminal-dots">
+        <div class="terminal-dot" style="background-color: #ef4444;"></div>
+        <div class="terminal-dot" style="background-color: #f59e0b;"></div>
+        <div class="terminal-dot" style="background-color: #10b981;"></div>
+      </div>
+      <span>oblitus@supernova.sh // sandbox-shell</span>
+      <span>v1.0.4-live</span>
+    </div>
+
+    <!-- Terminal Container -->
+    <div id="terminal-container"></div>
+  </div>
+
+</main>
+
+<div class="full-width-divider"></div>
+
+<div class="canvas-container">
+  <canvas id="c"></canvas>
+</div>
+
+<div class="full-width-divider"></div>
+
+<footer class="page-footer" aria-label="Footer">
+  <div class="footer-top">
+    <div class="footer-sign">
+      <div class="footer-sign-name">nova</div>
+    </div>
+    <nav class="footer-links" aria-label="Footer links">
+      <a href="/" class="footer-link">main</a>
+      <a href="/oblitus" class="footer-link">oblitus</a>
+    </nav>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 nova · built from scratch · no frameworks harmed</span>
+    <div class="footer-cursor-controls">
+      <div class="footer-cursor-row">
+        <span class="footer-cursor-label">cursor shape ↝</span>
+        <div class="custom-select" id="select-cursor" data-value="default">
+          <div class="custom-select-trigger">default</div>
+          <div class="custom-select-options">
+            <div class="custom-select-option selected" data-value="default">default</div>
+            <div class="custom-select-option" data-value="glow-circle">glow circle</div>
+            <div class="custom-select-option" data-value="tri-force">tri-force</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-cursor-row">
+        <span class="footer-cursor-label">follows cursor ↝</span>
+        <div class="custom-select" id="select-follower" data-value="cat">
+          <div class="custom-select-trigger">cat</div>
+          <div class="custom-select-options">
+            <div class="custom-select-option selected" data-value="cat">cat</div>
+            <div class="custom-select-option" data-value="calico">calico</div>
+            <div class="custom-select-option" data-value="dog">dog</div>
+            <div class="custom-select-option" data-value="eevee">eevee</div>
+            <div class="custom-select-option" data-value="ghost">ghost</div>
+            <div class="custom-select-option" data-value="fox">fox</div>
+            <div class="custom-select-option" data-value="none">none</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="/nova/devtools.js"></script>
+
+<!-- xterm.js CDN Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+
+<script>
+  // Initialize Xterm
+  const term = new Terminal({
+    cursorBlink: true,
+    fontSize: 12,
+    fontFamily: '"JetBrains Mono", Menlo, Monaco, Consolas, monospace',
+    theme: {
+      background: '#000000',
+      foreground: '#f0ede8',
+      cursor: '#f0ede8',
+      black: '#000000',
+      red: '#ef4444',
+      green: '#22c55e',
+      yellow: '#eab308',
+      blue: '#3b82f6',
+      magenta: '#a855f7',
+      cyan: '#06b6d4',
+      white: '#f0ede8'
+    }
+  });
+
+  const fitAddon = new FitAddon.FitAddon();
+  term.loadAddon(fitAddon);
+  term.open(document.getElementById('terminal-container'));
+  fitAddon.fit();
+
+  let command = '';
+  const PROMPT = '\r\n\x1b[38;5;81moblitus@supernova\x1b[0m:\x1b[38;5;214m~\x1b[0m$ ';
+
+  // ASCII Intro Art
+  const asciiBanner = [
+    "   _____ _____  _   _  ____  _____  ____  _      _      _ ",
+    "  / ____/ ____|| | | |/ __ \\|  __ \\/ __ \\| |    | |    | |",
+    " | (___| (___  | | | | |  | | |__) | |  | | |    | |    | |",
+    "  \\____\\\\___ \\ | | | | |  | |  _  /| |  | | |    | |    | |",
+    "  ____) |___) || |_| | |__| | | \\ \\| |__| | |____| |____|_|",
+    " |_____/_____/  \\___/ \\____/|_|  \\_\\\\____/|______|______|(_)",
+    "",
+    "welcome to the interactive oblitus terminal gateway. console ready.",
+    "type 'help' to review available shell operators.",
+    ""
+  ].join('\r\n');
+
+  term.write(asciiBanner);
+  term.write(PROMPT);
+
+  // Shell engine listener
+  term.onData(e => {
+    switch (e) {
+      case '\r': // Enter
+        handleCommand(command.trim());
+        command = '';
+        break;
+      case '\u007F': // Backspace
+        if (command.length > 0) {
+          command = command.slice(0, -1);
+          term.write('\b \b');
+        }
+        break;
+      default:
+        // Exclude control characters
+        if (e >= ' ' && e <= '~') {
+          command += e;
+          term.write(e);
+        }
+    }
+  });
+
+  function handleCommand(cmd) {
+    if (!cmd) {
+      term.write(PROMPT);
+      return;
+    }
+
+    const parts = cmd.split(' ');
+    const op = parts[0].toLowerCase();
+    const arg = parts.slice(1).join(' ');
+
+    term.write('\r\n');
+
+    switch (op) {
+      case 'help':
+        term.write('available shell operators:\r\n');
+        term.write('  help        - list system operator nodes\r\n');
+        term.write('  about       - print general operator identity\r\n');
+        term.write('  neofetch    - print system specification logo block\r\n');
+        term.write('  status      - query live dashboard status heartbeat\r\n');
+        term.write('  stats       - download detailed repository summaries\r\n');
+        term.write('  visitors    - list geo access nodes\r\n');
+        term.write('  matrix      - launch digital rain terminal sequence\r\n');
+        term.write('  clear       - clear viewport buffer\r\n');
+        term.write('  exit        - close gateway back to root\r\n');
+        break;
+
+      case 'about':
+        term.write('alias: nova // supernova0866\r\n');
+        term.write('role: software compiler, explorer, dark aesthetic enthusiast\r\n');
+        term.write('focus: rust, typescript, cloud native environments, beautiful systems\r\n');
+        break;
+
+      case 'neofetch':
+        term.write('\x1b[38;5;81m     .      \x1b[0m  host: supernova-node-v3\r\n');
+        term.write('\x1b[38;5;81m    / \\     \x1b[0m  os: cloudflare-worker-linux\r\n');
+        term.write('\x1b[38;5;81m   /   \\    \x1b[0m  kernel: c8-v8-isolate\r\n');
+        term.write('\x1b[38;5;81m  /  ●  \\   \x1b[0m  uptime: 2026 days, 7h\r\n');
+        term.write('\x1b[38;5;81m /_______\\  \x1b[0m  shell: oblitus-sh-1.0.4\r\n');
+        term.write('\x1b[38;5;81m   || ||    \x1b[0m  memory: 128mb / 512mb isolate\r\n');
+        term.write('\x1b[38;5;81m   || ||    \x1b[0m  db: turso + sqlite + cloudflare-d1\r\n');
+        break;
+
+      case 'status':
+        term.write('querying status heartbeat...\r\n');
+        fetch('/api/status')
+          .then(res => res.json())
+          .then(data => {
+            term.write(`  status:    \x1b[32m${data.status}\x1b[0m\r\n`);
+            term.write(`  last_seen: ${new Date(data.last_seen).toLocaleString().toLowerCase()}\r\n`);
+            term.write(PROMPT);
+          })
+          .catch(() => {
+            term.write('  \x1b[31merror: failed to reach status gateway.\x1b[0m\r\n');
+            term.write(PROMPT);
+          });
+        return; // Async returns itself
+
+      case 'stats':
+        term.write('fetching repository statistics...\r\n');
+        fetch('/api/stats')
+          .then(res => res.json())
+          .then(data => {
+            term.write(`  repositories: ${data.repos_count}\r\n`);
+            term.write(`  stars count:  ${data.stars_count}\r\n`);
+            term.write(`  commits sum:  ${data.commits_count}\r\n`);
+            term.write(`  followers:    ${data.followers_count}\r\n`);
+            term.write('  languages:\r\n');
+            data.languages.forEach(l => {
+              term.write(`    - ${l.name.toLowerCase()}: ${l.ratio}%\r\n`);
+            });
+            term.write(PROMPT);
+          })
+          .catch(() => {
+            term.write('  \x1b[31merror: metadata download aborted.\x1b[0m\r\n');
+            term.write(PROMPT);
+          });
+        return;
+
+      case 'visitors':
+        term.write('listening for geo nodes...\r\n');
+        fetch('/api/visitors/geo')
+          .then(res => res.json())
+          .then(data => {
+            term.write(`total logged nodes: ${data.length}\r\n`);
+            const list = data.length > 0 ? data : [{ city: 'London', country: 'UK' }, { city: 'Tokyo', country: 'Japan' }];
+            list.slice(0, 10).forEach(log => {
+              term.write(`  - ${log.city ? log.city.toLowerCase() : 'unknown'} [${log.country ? log.country.toLowerCase() : 'unknown'}]\r\n`);
+            });
+            term.write(PROMPT);
+          })
+          .catch(() => {
+            term.write('  \x1b[31mfailed to compile geographic array.\x1b[0m\r\n');
+            term.write(PROMPT);
+          });
+        return;
+
+      case 'matrix':
+        startMatrixSequence();
+        return;
+
+      case 'clear':
+        term.clear();
+        break;
+
+      case 'exit':
+        term.write('closing oblitus shell gate...\r\n');
+        setTimeout(() => {
+          window.location.href = '/oblitus';
+        }, 600);
+        return;
+
+      default:
+        term.write(`oblitus-sh: operator not found: '${op}'. try 'help'`);
+    }
+
+    term.write(PROMPT);
+  }
+
+  // Beautiful green matrix terminal rainfall easter egg
+  function startMatrixSequence() {
+    term.write('\x1b[?25l'); // Hide cursor
+    term.clear();
+
+    const cols = term.cols;
+    const rows = term.rows;
+    const drops = Array(cols).fill(0);
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_@#$&*+=%?';
+
+    let frameCount = 0;
+    const matrixInterval = setInterval(() => {
+      // Clear line, then write matrix characters
+      term.write('\x1b[H'); // Move home
+
+      for (let r = 0; r < rows; r++) {
+        let line = '';
+        for (let c = 0; c < cols; c++) {
+          if (drops[c] === r) {
+            line += `\x1b[38;5;82m${chars[Math.floor(Math.random() * chars.length)]}\x1b[0m`;
+          } else if (drops[c] > r && drops[c] - r < 10) {
+            // Fade effect green
+            const dim = Math.floor((1 - (drops[c] - r)/10) * 15) + 232;
+            const greenVal = 22 + Math.floor((1 - (drops[c]-r)/10) * 6) * 36;
+            line += `\x1b[38;5;${greenVal}m${chars[Math.floor(Math.random() * chars.length)]}\x1b[0m`;
+          } else {
+            line += ' ';
+          }
+        }
+        term.write(line + '\r\n');
+      }
+
+      for (let i = 0; i < cols; i++) {
+        if (drops[i] > rows && Math.random() > 0.975) {
+          drops[i] = 0;
+        } else {
+          drops[i]++;
+        }
+      }
+
+      frameCount++;
+      if (frameCount > 240) { // Stop matrix after 12s
+        clearInterval(matrixInterval);
+        term.write('\x1b[?25h'); // Show cursor
+        term.clear();
+        term.write(asciiBanner);
+        term.write(PROMPT);
+      }
+    }, 50);
+  }
+
+  // Fit terminal on window resize
+  window.addEventListener('resize', () => {
+    fitAddon.fit();
+  });
+
+  // --- Interactive Canvas Background ---
+  // Custom selectors options dropdown mapping
+  document.querySelectorAll('.custom-select').forEach(sel => {
+    const trigger = sel.querySelector('.custom-select-trigger');
+    const options = sel.querySelectorAll('.custom-select-option');
+
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      document.querySelectorAll('.custom-select.open').forEach(s => {
+        if (s !== sel) s.classList.remove('open');
+      });
+      sel.classList.toggle('open');
+    });
+
+    options.forEach(opt => {
+      opt.addEventListener('click', e => {
+        e.stopPropagation();
+        const val = opt.dataset.value;
+        sel.dataset.value = val;
+        trigger.textContent = opt.textContent;
+        options.forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        sel.classList.remove('open');
+
+        if (sel.id === 'select-cursor' && window.CursorJS) window.CursorJS.loadCursor(val);
+        if (sel.id === 'select-follower' && window.CursorJS) window.CursorJS.loadFollower(val);
+      });
+    });
+  });
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.custom-select.open').forEach(s => s.classList.remove('open'));
+  });
+</script>
+
+<script src="/canvas/loader.js"></script>
+<script src="/js/oneko.js" data-cat="/js/oneko.gif"></script>
+<script src="/js/cursor.js"></script>
+</body>
+</html>
