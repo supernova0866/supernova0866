@@ -1,0 +1,12 @@
+{
+  "name": "supernova-backend",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "db:migrate": "node db/schema.js",
+    "db:print": "node db/schema.js --print",
+    "dev": "wrangler pages dev",
+    "deploy": "wrangler pages deploy ../frontend --project-name supernova"
+  }
+}
