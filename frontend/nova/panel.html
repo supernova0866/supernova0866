@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>nova // gatekeeper</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap');
 
@@ -11,35 +13,20 @@
     --black: #000000;
     --white: #ffffff;
     --dim: rgba(255,255,255,0.35);
-    --dimmer: rgba(255,255,255,0.08);
     --border: rgba(255,255,255,0.06);
     --glow-soft: 0 0 18px rgba(255,255,255,0.05);
-    --glow-hover: 0 0 28px rgba(255,255,255,0.15);
+    --red: #ff5252;
+    --green: #10b981;
     --font-sans: 'Inter', sans-serif;
     --font-mono: 'DM Mono', monospace;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* Custom Scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: var(--black);
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 10px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.15) var(--black);
-  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+  * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) var(--black); }
 
   body {
     background: var(--black);
@@ -51,10 +38,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    padding: 1.5rem;
   }
 
-  /* ── noise texture overlay ── */
   body::after {
     content: '';
     position: fixed;
@@ -66,7 +52,7 @@
   }
 
   .login-card {
-    background: rgba(255, 255, 255, 0.01);
+    background: rgba(255,255,255,0.01);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 3rem 2.5rem;
@@ -79,76 +65,57 @@
     z-index: 100;
     animation: fadeUp .6s ease both;
   }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
   .logo-text {
-    font-size: 2.2rem;
-    font-weight: 900;
-    letter-spacing: -.03em;
-    color: var(--white);
-    text-transform: lowercase;
-    margin-bottom: 0.5rem;
+    font-size: 2.2rem; font-weight: 900; letter-spacing: -.03em;
+    text-transform: lowercase; margin-bottom: .5rem;
     text-shadow: 0 0 40px rgba(255,255,255,0.15);
   }
+  .sub-text { font-family: var(--font-mono); font-size: 11px; color: var(--dim); letter-spacing: .05em; margin-bottom: 2rem; }
 
-  .sub-text {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--dim);
-    letter-spacing: 0.05em;
-    margin-bottom: 2.5rem;
+  form { display: flex; flex-direction: column; gap: .9rem; text-align: left; }
+  label { font-family: var(--font-mono); font-size: 10px; color: var(--dim); letter-spacing: .08em; text-transform: uppercase; }
+  input[type=password] {
+    width: 100%;
+    background: rgba(255,255,255,0.01);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 13px 16px;
+    color: var(--white);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    margin-top: .4rem;
+    transition: border-color .2s, background .2s;
   }
+  input[type=password]:focus { outline: none; border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.03); }
 
   .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    padding: 12px 24px;
-    border-radius: 6px;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: 400;
-    letter-spacing: 0.05em;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.25s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+    width: 100%; padding: 12px 24px; border-radius: 6px;
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: .05em;
+    text-decoration: none; cursor: pointer; transition: all .25s ease; border: none;
   }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+  .btn-primary { background: var(--white); color: var(--black); }
+  .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,255,255,0.2); }
+  .btn-github { background: transparent; color: var(--white); border: 1px solid rgba(255,255,255,0.15); }
+  .btn-github:hover { border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.04); }
+  .github-icon { width: 16px; height: 16px; fill: currentColor; }
 
-  .btn-github {
-    background: var(--white);
-    color: var(--black);
-    border: none;
-  }
+  .divider { display: flex; align-items: center; gap: 12px; margin: 1.4rem 0; font-family: var(--font-mono); font-size: 9px; letter-spacing: .15em; color: rgba(255,255,255,0.2); text-transform: uppercase; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
 
-  .btn-github:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(255,255,255,0.2);
-  }
+  .msg { min-height: 1.2rem; font-family: var(--font-mono); font-size: 11px; text-align: left; }
+  .msg.error { color: var(--red); }
+  .msg.info { color: rgba(255,255,255,0.55); }
 
-  .github-icon {
-    width: 16px;
-    height: 16px;
-    fill: currentColor;
-  }
+  .links { margin-top: 1.1rem; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; }
+  .links a { color: rgba(255,255,255,0.3); text-decoration: none; transition: color .2s; }
+  .links a:hover { color: rgba(255,255,255,0.75); }
 
-  .footer-note {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    color: rgba(255,255,255,0.15);
-    margin-top: 2rem;
-    letter-spacing: 0.08em;
-  }
-
-  .footer-note a {
-    color: inherit;
-    text-decoration: underline;
-  }
+  .footer-note { font-family: var(--font-mono); font-size: 9px; color: rgba(255,255,255,0.15); margin-top: 1.8rem; letter-spacing: .08em; }
+  .footer-note a { color: inherit; text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -157,27 +124,77 @@
   <div class="logo-text">nova.auth</div>
   <div class="sub-text">private control panel login</div>
 
-  <button class="btn btn-github" id="login-btn">
-    <svg class="github-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <form id="login-form" autocomplete="on">
+    <div>
+      <label for="password">password</label>
+      <input type="password" id="password" name="password" autocomplete="current-password" required maxlength="256" autofocus>
+    </div>
+    <div class="msg" id="msg" role="status" aria-live="polite"></div>
+    <button type="submit" class="btn btn-primary" id="login-btn">sign in</button>
+  </form>
+
+  <div class="divider">or</div>
+
+  <a class="btn btn-github" href="/nova/auth/login">
+    <svg class="github-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
     </svg>
-    authenticate with github
-  </button>
+    sign in with github
+  </a>
 
-  <div class="footer-note">
-    return to <a href="/">main site</a> · <a href="/oblitus">oblitus</a>
+  <div class="links">
+    <a href="/nova/auth/login?intent=reset" id="forgot">forgot password?</a>
+    <a href="/">main site</a>
   </div>
+
+  <div class="footer-note">password is the main route · github is the backup and the only way to reset it</div>
 </div>
 
 <script>
-  document.getElementById('login-btn').addEventListener('click', () => {
-    window.location.href = '/nova/auth/login';
-  });
+  const msg = document.getElementById('msg');
+  const form = document.getElementById('login-form');
+  const btn = document.getElementById('login-btn');
+  const setMsg = (text, kind = 'error') => { msg.textContent = text; msg.className = 'msg ' + kind; };
 
-  // Print console brand
-  if (window.NovaConsole) {
-    // Loaded optionally
-  }
+  const ERRORS = {
+    state:  'github sign-in expired or was tampered with. try again.',
+    github: 'github did not complete the sign-in. try again.',
+    denied: 'that github account is not allowed here.',
+  };
+  const err = new URLSearchParams(location.search).get('error');
+  if (err) setMsg(ERRORS[err] || 'sign-in failed.');
+
+  fetch('/nova/auth/session', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(s => {
+      if (s.authenticated) { location.replace('/nova/dashboard'); return; }
+      if (s.setup_needed && !err) setMsg('no password set yet — sign in with github first, then set one.', 'info');
+    })
+    .catch(() => {});
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    setMsg('');
+    try {
+      const res = await fetch('/nova/auth/password-login', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: document.getElementById('password').value }),
+      });
+      if (res.ok) { location.replace('/nova/dashboard'); return; }
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 429) setMsg('too many attempts. wait a few minutes, or use github.');
+      else if (res.status === 401) setMsg('wrong password.');
+      else setMsg(data.error || 'something went wrong.');
+    } catch {
+      setMsg('network error. try again.');
+    } finally {
+      btn.disabled = false;
+      document.getElementById('password').value = '';
+    }
+  });
 </script>
 <script src="/nova/devtools.js"></script>
 </body>
