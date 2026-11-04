@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>visitors // oblitus</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -540,6 +541,9 @@
 <script src="/nova/devtools.js"></script>
 
 <script>
+  function escapeHTML(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
   // Dynamic Map canvas setup
   const mapCanvas = document.getElementById('worldMapCanvas');
   const mapCtx = mapCanvas.getContext('2d');
@@ -620,7 +624,7 @@
 
     const t = performance.now();
 
-    visitorDots.forEach(dot => {
+    visitorDots.filter(d => d.lat != null && d.lon != null).forEach(dot => {
       const pos = latLonToXY(dot.lat, dot.lon);
       
       // Pulse animation ring
@@ -652,14 +656,7 @@
       .then(data => {
         document.getElementById('visitor-total-label').textContent = `${data.length} explorer records`;
         
-        // Build mock coordinates if empty (make sure page is beautiful by default)
-        const entries = data.length > 0 ? data : [
-          { country: 'United States', city: 'San Francisco', region: 'CA', timezone: 'America/Los_Angeles', visited_at: new Date().toISOString(), lat: 37.7749, lon: -122.4194 },
-          { country: 'United Kingdom', city: 'London', region: 'ENG', timezone: 'Europe/London', visited_at: new Date().toISOString(), lat: 51.5074, lon: -0.1278 },
-          { country: 'Japan', city: 'Tokyo', region: 'TYO', timezone: 'Asia/Tokyo', visited_at: new Date().toISOString(), lat: 35.6762, lon: 139.6503 },
-          { country: 'Germany', city: 'Berlin', region: 'BE', timezone: 'Europe/Berlin', visited_at: new Date().toISOString(), lat: 52.5200, lon: 13.4050 },
-          { country: 'Singapore', city: 'Singapore', region: 'SG', timezone: 'Asia/Singapore', visited_at: new Date().toISOString(), lat: 1.3521, lon: 103.8198 }
-        ];
+        const entries = data;
 
         visitorDots = entries;
 
@@ -671,7 +668,7 @@
           const item = document.createElement('div');
           item.className = 'geo-log-item';
           item.innerHTML = `
-            <span class="geo-city">${log.city ? log.city.toLowerCase() : 'unknown city'} <span class="geo-country">(${log.country ? log.country.toLowerCase() : 'unknown'})</span></span>
+            <span class="geo-city">${escapeHTML(log.city ? log.city.toLowerCase() : 'unknown city')} <span class="geo-country">(${escapeHTML(log.country ? log.country.toLowerCase() : 'unknown')})</span></span>
             <span>${formattedTime}</span>
           `;
           logsContainer.appendChild(item);
@@ -693,7 +690,7 @@
           const item = document.createElement('div');
           item.className = 'country-count-item';
           item.innerHTML = `
-            <span class="country-name">${name.toLowerCase()}</span>
+            <span class="country-name">${escapeHTML(name.toLowerCase())}</span>
             <span class="country-percentage">${pct}%</span>
           `;
           countryContainer.appendChild(item);
@@ -704,6 +701,7 @@
       })
       .catch(err => {
         console.error("Map query error:", err);
+        drawMapLoop();
       });
   });
 
