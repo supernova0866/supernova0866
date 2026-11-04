@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>guestbook // oblitus</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -588,11 +589,11 @@
           card.className = 'entry-card';
 
           const formattedDate = new Date(entry.created_at).toLocaleDateString().toLowerCase();
-          const countrySpan = entry.country ? `<span class="entry-location">${entry.country.toLowerCase()}</span>` : '';
+          const countrySpan = entry.country ? `<span class="entry-location">${escapeHTML(entry.country.toLowerCase())}</span>` : '';
 
           card.innerHTML = `
             <div class="entry-header">
-              <span class="entry-author">${entry.name.toLowerCase()}</span>
+              <span class="entry-author">${escapeHTML(entry.name.toLowerCase())}</span>
               <div class="entry-meta">
                 ${countrySpan}
                 <span>${formattedDate}</span>
