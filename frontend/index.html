@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>nova</title>
+<meta name="description" content="nova — a student building things to understand them.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;800;900&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap');
 
@@ -1276,46 +1278,6 @@
     setTimeout(tick, 300);
   }
 
-  // ── dynamic clock ──
-  function updateClock() {
-    const now = new Date();
-    
-    // Update main clock time and seconds
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    
-    const timeStr = `${hours}:${minutes}`;
-    const secStr = `:${seconds}`;
-    
-    const clockTimeEl = document.getElementById('clock-time');
-    const clockSecEl = document.getElementById('clock-seconds');
-    if (clockTimeEl) clockTimeEl.textContent = timeStr;
-    if (clockSecEl) clockSecEl.textContent = secStr;
-    
-    // Update mini clock in the navigation status pill
-    const miniTimeEl = document.querySelector('.nav-time-mini');
-    if (miniTimeEl) miniTimeEl.textContent = timeStr;
-  }
-  
-  // Set accurate location/timezone based on the client's locale
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz) {
-      const parts = tz.split('/');
-      const city = parts[parts.length - 1].replace(/_/g, ' ').toLowerCase();
-      const clockLocEl = document.getElementById('clock-location');
-      if (clockLocEl) {
-        clockLocEl.textContent = `in ${city}`;
-      }
-    }
-  } catch (e) {
-    // Keep default "on the internet"
-  }
-  
-  setInterval(updateClock, 1000);
-  updateClock();
-
   // ── navigation ──
   const sections  = document.querySelectorAll('.section');
   const navLinks  = document.querySelectorAll('.nav-link');
@@ -1519,7 +1481,7 @@
             const json = await lanyardRes.json();
             if (json.success && json.data && json.data.listening_to_spotify) {
               const spot = json.data.spotify;
-              spotifyEl.innerHTML = `listening to {bold:${spot.song}} <span style="opacity: 0.45">by</span> {highlight:${spot.artist}}`;
+              spotifyEl.innerHTML = `listening to {bold:${spot.song}} {muted:by} {highlight:${spot.artist}}`;
               if (window.NovaMark) {
                 spotifyEl.innerHTML = window.NovaMark.parse(spotifyEl.innerHTML);
               }
@@ -1541,7 +1503,7 @@
         if (contentType && contentType.includes('application/json')) {
           const data = await res.json();
           if (data.isPlaying) {
-            spotifyEl.innerHTML = `listening to {bold:${data.song}} <span style="opacity: 0.45">by</span> {highlight:${data.artist}}`;
+            spotifyEl.innerHTML = `listening to {bold:${data.song}} {muted:by} {highlight:${data.artist}}`;
             if (window.NovaMark) {
               spotifyEl.innerHTML = window.NovaMark.parse(spotifyEl.innerHTML);
             }
@@ -1771,6 +1733,8 @@
 </script>
 
   <script src="/nova/novamark.js"></script>
+  <script src="/js/clock.js"></script>
+  <script src="/js/site.js"></script>
   <script src="/js/oneko.js" data-cat="/js/oneko.gif"></script>
   <script src="/js/cursor.js"></script>
 </body>
