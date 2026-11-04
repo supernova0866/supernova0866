@@ -91,12 +91,13 @@
     }
   }
 
-  async function applyConfig() {
+  async function startClock() {
+    if (!window.NovaClock) return;
     try {
-      const cfg = await getJson('/api/config');
-      const loc = document.getElementById('clock-location');
-      if (loc) loc.textContent = (cfg['hero:location'] || '').trim() || 'on the internet';
-    } catch (e) { }
+      window.NovaClock.start(await getJson('/api/config'));
+    } catch (e) {
+      window.NovaClock.start({});
+    }
   }
 
   const SECTIONS = ['home', 'now', 'about', 'projects', 'socials'];
@@ -120,7 +121,7 @@
   function init() {
     renderProjects();
     renderSocials();
-    applyConfig();
+    startClock();
     setupHash();
   }
 
