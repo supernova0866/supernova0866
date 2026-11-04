@@ -18,21 +18,16 @@ function ensureSchema(env) {
 
 export default {
   async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const { pathname } = url;
+    const { pathname } = new URL(request.url);
 
     if (pathname === '/api' || pathname.startsWith('/api/')) {
       await ensureSchema(env);
       return api.onRequest({ request, env, ctx });
     }
 
-    if (pathname.startsWith('/nova/auth')) {
+    if (pathname === '/nova/auth' || pathname.startsWith('/nova/auth/')) {
       await ensureSchema(env);
       return auth.onRequest({ request, env, ctx });
-    }
-
-    if (pathname === '/oblitus' || pathname === '/oblitus/') {
-      return env.ASSETS.fetch(new Request(new URL('/oblitus/oblitus', url), request));
     }
 
     return env.ASSETS.fetch(request);
