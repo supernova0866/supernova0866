@@ -104,7 +104,11 @@ export const statements = [
 export const defaultConfig = {
   'hero:status_text': 'do not disturb',
   'hero:status_subtext': 'probably doing nothing.\nor maybe something',
-  'hero:location': '',
+  'clock:mode': 'timezone',
+  'clock:zone': 'UTC',
+  'clock:fun': 'escape',
+  'clock:custom_text': '',
+  'clock:custom_subtext': '',
   'now:listening': 'nothing playing on spotify at the moment.',
   'now:listening_meta': 'on repeat',
   'now:project_name': '',
