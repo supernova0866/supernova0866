@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>oblitus // supernova</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -637,8 +638,8 @@
           updateDiscoveryStats(data.n, data.x);
         })
         .catch(() => {
-          localStorage.setItem('oblitus:found', '42');
-          updateDiscoveryStats(42, 100);
+          const statEl = document.getElementById('discovery-stat');
+          if (statEl) statEl.textContent = 'discovery records unavailable right now.';
         });
     } else {
       fetch(countUrl)
@@ -650,10 +651,10 @@
     // Ping visitor count
     function pingPresence() {
       // Create session id if not exists
-      let sessId = sessionStorage.getItem('nova:session:id');
+      let sessId = sessionStorage.getItem('nova:session_id');
       if (!sessId) {
         sessId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-        sessionStorage.setItem('nova:session:id', sessId);
+        sessionStorage.setItem('nova:session_id', sessId);
       }
 
       fetch('/api/visitors/ping', {
