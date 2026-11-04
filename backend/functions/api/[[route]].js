@@ -7,6 +7,24 @@ import { githubStats, emptyStats, nowPlaying } from '../../lib/external.js';
 const nowSec = () => Math.floor(Date.now() / 1000);
 const PRESENCE_WINDOW = 300;
 const STATUSES = ['online', 'idle', 'do not disturb', 'offline'];
+const FUN_CLOCKS = ['escape', 'nonexistent', 'nan', 'none', 'circle', 'beats', 'mars', 'glitch'];
+
+const validZone = (v) => {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: v });
+    return v.length > 0;
+  } catch {
+    return false;
+  }
+};
+
+const CLOCK_RULES = {
+  'clock:mode': (v) => ['timezone', 'fun', 'custom'].includes(v),
+  'clock:zone': validZone,
+  'clock:fun': (v) => FUN_CLOCKS.includes(v),
+  'clock:custom_text': (v) => v.length <= 16,
+  'clock:custom_subtext': (v) => v.length <= 60,
+};
 
 const UPSERT_CONFIG =
   'INSERT INTO config(key, value, updated_at) VALUES(?,?,unixepoch()) ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at';
@@ -42,10 +60,11 @@ route('POST', '/config', async ({ request, env }) => {
   const body = await readJson(request, 40000);
   const stmts = [];
   for (const [k, v] of Object.entries(body)) {
-    if (!/^(hero|now|about|discord|lastfm|card):[a-z_]{1,40}$/.test(k)) throw new HttpError(400, `unknown setting: ${k}`);
+    if (!/^(hero|now|about|discord|lastfm|card|clock):[a-z_]{1,40}$/.test(k)) throw new HttpError(400, `unknown setting: ${k}`);
     if (typeof v !== 'string' || v.length > (k === 'about:body' ? 8000 : 500)) {
       throw new HttpError(400, `invalid value for ${k}`);
     }
+    if (k.startsWith('clock:') && !(CLOCK_RULES[k] && CLOCK_RULES[k](v))) throw new HttpError(400, `invalid value for ${k}`);
     stmts.push({ sql: UPSERT_CONFIG, args: [k, v] });
   }
   if (stmts.length) await tx(env, stmts);
