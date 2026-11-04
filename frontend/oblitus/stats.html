@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>stats // oblitus</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
@@ -600,6 +601,9 @@
 <script src="/nova/devtools.js"></script>
 
 <script>
+  function escapeHTML(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
   // Fetch GitHub stats from API
   window.addEventListener('DOMContentLoaded', () => {
     fetch('/api/stats')
@@ -645,7 +649,7 @@
           lblItem.className = 'lang-lbl-item';
           lblItem.innerHTML = `
             <span class="lang-color-dot" style="background-color: ${color}"></span>
-            <span>${lang.name.toLowerCase()} <span style="color:rgba(255,255,255,0.25);">${lang.ratio}%</span></span>
+            <span>${escapeHTML(lang.name.toLowerCase())} <span style="color:rgba(255,255,255,0.25);">${lang.ratio}%</span></span>
           `;
           labelsEl.appendChild(lblItem);
         });
@@ -662,15 +666,15 @@
 
           repoEl.innerHTML = `
             <div class="repo-header">
-              <a href="${repo.url}" target="_blank" rel="noopener" class="repo-name">${repo.name}</a>
+              <a href="${escapeHTML(repo.url)}" target="_blank" rel="noopener" class="repo-name">${escapeHTML(repo.name)}</a>
               <div class="repo-meta">
                 <span>★ ${repo.stars}</span>
                 <span>⑂ ${repo.forks}</span>
               </div>
             </div>
-            <p class="repo-desc">${repo.description || 'no description available.'}</p>
+            <p class="repo-desc">${escapeHTML(repo.description || 'no description available.')}</p>
             <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem;">
-              <span style="font-family: var(--font-mono); font-size: 0.65rem; color: rgba(255,255,255,0.35)">${repo.language ? repo.language.toLowerCase() : 'unknown'}</span>
+              <span style="font-family: var(--font-mono); font-size: 0.65rem; color: rgba(255,255,255,0.35)">${escapeHTML(repo.language ? repo.language.toLowerCase() : 'unknown')}</span>
               <span style="font-family: var(--font-mono); font-size: 0.65rem; color: rgba(255,255,255,0.2)">updated ${new Date(repo.updated_at).toLocaleDateString().toLowerCase()}</span>
             </div>
             <div class="repo-lang-bar-container">
