@@ -198,6 +198,7 @@
   }
 
   function loadCursor(key) {
+    if (window.matchMedia && window.matchMedia('(hover: none)').matches) key = 'default';
     currentCursor = key;
     try { localStorage.setItem('nova-cursor', key); } catch (e) {}
     syncSelects('select-cursor', key);
