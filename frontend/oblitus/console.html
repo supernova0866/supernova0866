@@ -128,56 +128,6 @@
     margin-bottom: 2rem;
   }
 
-  /* Terminal Card container */
-  .terminal-wrapper {
-    background: #000000;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    padding: 1.25rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-    margin-bottom: 3rem;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .terminal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    margin-bottom: 1rem;
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.3);
-  }
-
-  .terminal-dots {
-    display: flex;
-    gap: 6px;
-  }
-
-  .terminal-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.15);
-  }
-
-  /* xterm fit adjust */
-  #terminal-container {
-    width: 100%;
-    min-height: 380px;
-  }
-
-  .xterm {
-    padding: 2px;
-  }
-
-  .xterm-viewport {
-    background-color: #000000 !important;
-  }
-
   /* Full width divider */
   .full-width-divider {
     width: 100vw;
@@ -287,10 +237,19 @@
     gap: 10px;
   }
 
+  /* fixed-width label: text on the left, arrow pinned right, so both selects line up */
   .footer-cursor-label {
+    display: flex;
+    justify-content: space-between;
+    width: 7.5rem;
+    white-space: nowrap;
     font-family: var(--font-mono);
     font-size: 0.7rem;
     color: rgba(255, 255, 255, 0.3);
+  }
+
+  .footer-cursor-label::after {
+    content: '↝';
   }
 
   .custom-select {
@@ -347,6 +306,56 @@
   .custom-select-option.selected {
     color: var(--white);
     background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Terminal Card container */
+  .terminal-wrapper {
+    background: #000000;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .terminal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .terminal-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .terminal-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+
+  /* xterm fit adjust */
+  #terminal-container {
+    width: 100%;
+    min-height: 380px;
+  }
+
+  .xterm {
+    padding: 2px;
+  }
+
+  .xterm-viewport {
+    background-color: #000000 !important;
   }
 </style>
 </head>
@@ -406,7 +415,7 @@
     <span class="footer-copy">© 2026 nova · built from scratch · no frameworks harmed</span>
     <div class="footer-cursor-controls">
       <div class="footer-cursor-row">
-        <span class="footer-cursor-label">cursor shape ↝</span>
+        <span class="footer-cursor-label">cursor shape</span>
         <div class="custom-select" id="select-cursor" data-value="default">
           <div class="custom-select-trigger">default</div>
           <div class="custom-select-options">
@@ -417,7 +426,7 @@
         </div>
       </div>
       <div class="footer-cursor-row">
-        <span class="footer-cursor-label">follows cursor ↝</span>
+        <span class="footer-cursor-label">follows cursor</span>
         <div class="custom-select" id="select-follower" data-value="cat">
           <div class="custom-select-trigger">cat</div>
           <div class="custom-select-options">
@@ -440,7 +449,6 @@
 <!-- xterm.js CDN Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
-
 <script>
   // Initialize Xterm
   const term = new Terminal({
@@ -683,8 +691,7 @@
     fitAddon.fit();
   });
 
-  // --- Interactive Canvas Background ---
-  // Custom selectors options dropdown mapping
+  // --- Custom selects dropdown handlers ---
   document.querySelectorAll('.custom-select').forEach(sel => {
     const trigger = sel.querySelector('.custom-select-trigger');
     const options = sel.querySelectorAll('.custom-select-option');
