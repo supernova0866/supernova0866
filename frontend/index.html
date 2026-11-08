@@ -57,8 +57,6 @@
     overflow-x: hidden;
   }
 
-  
-
   /* ── entry gate ── */
   #gate {
     position: fixed; inset: 0;
@@ -753,14 +751,14 @@
     position: absolute;
     right: 7px;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-50%) rotate(180deg);
     width: 7px; height: 4px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4' viewBox='0 0 7 4'%3E%3Cpath d='M0 0l3.5 4L7 0z' fill='rgba(255,255,255,0.2)'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     transition: transform .2s;
   }
   .custom-select.open .custom-select-trigger::after {
-    transform: translateY(-50%) rotate(180deg);
+    transform: translateY(-50%);
   }
   .custom-select:hover .custom-select-trigger,
   .custom-select.open .custom-select-trigger {
@@ -770,7 +768,7 @@
   .custom-select-options {
     display: none;
     position: absolute;
-    top: calc(100% + 4px);
+    bottom: calc(100% + 4px);
     right: 0;
     width: 100%;
     background: #080808;
@@ -778,6 +776,7 @@
     border-radius: 4px;
     overflow: hidden;
     z-index: 9999;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
   }
   .custom-select.open .custom-select-options { display: block; }
   .custom-select-option {
