@@ -1,5 +1,5 @@
 import { q, exec, batch, tx } from '../../lib/db.js';
-import { json, handle, HttpError, readJson, assertSameOrigin, ipHash, rateLimit } from '../../lib/http.js';
+import { json, handle, HttpError, readJson, assertSameOrigin, ipHash, visitorId, rateLimit } from '../../lib/http.js';
 import { getSession, requireAdmin } from '../../lib/auth.js';
 import { str, optStr, cleanUrl, safeJson } from '../../lib/validate.js';
 import { githubStats, emptyStats, nowPlaying } from '../../lib/external.js';
@@ -9,7 +9,9 @@ const PRESENCE_WINDOW = 300;
 const STATUSES = ['online', 'idle', 'do not disturb', 'offline'];
 const FUN_CLOCKS = ['escape', 'nonexistent', 'nan', 'none', 'circle', 'beats', 'mars', 'glitch'];
 
+const OFFSET_RE = /^[+-](?:0\d|1[0-4]):[0-5]\d$/;
 const validZone = (v) => {
+  if (OFFSET_RE.test(v)) return true;
   try {
     new Intl.DateTimeFormat('en', { timeZone: v });
     return v.length > 0;
@@ -237,16 +239,13 @@ route('DELETE', '/ask/:id', async ({ request, env, params }) => {
   return json({ ok: true });
 });
 
-// ~11 km precision on purpose: the visitor map is public
 const round1 = (v) => {
   const n = parseFloat(v);
   return Number.isFinite(n) ? Math.round(n * 10) / 10 : null;
 };
 
 route('POST', '/visitors/ping', async ({ request, env }) => {
-  const body = await readJson(request, 500);
-  const sid = typeof body.session_id === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(body.session_id) ? body.session_id : null;
-  if (!sid) throw new HttpError(400, 'bad session_id');
+  const sid = await visitorId(env, request);
   await rateLimit(env, 'ping:' + (await ipHash(env, request)), 120, 3600);
 
   const cf = request.cf || {};
