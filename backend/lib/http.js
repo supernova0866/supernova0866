@@ -57,6 +57,21 @@ export async function ipHash(env, request) {
   return (await hmac(env.SESSION_SECRET, 'ip:' + getIp(request))).slice(0, 24);
 }
 
+export function ipBucket(ip) {
+  if (!ip || ip === 'unknown') return 'unknown';
+  if (!ip.includes(':')) return ip;
+  if (ip.includes('.')) return ip.slice(ip.lastIndexOf(':') + 1); // ::ffff:1.2.3.4 (v4-mapped)
+  const [head, tail = ''] = ip.split('::');
+  const h = head ? head.split(':') : [];
+  const t = tail ? tail.split(':') : [];
+  const groups = ip.includes('::') ? [...h, ...Array(Math.max(0, 8 - h.length - t.length)).fill('0'), ...t] : h;
+  return groups.slice(0, 4).map((g) => g.toLowerCase().padStart(4, '0')).join(':');
+}
+
+export async function visitorId(env, request) {
+  return (await hmac(env.SESSION_SECRET, 'visitor:' + ipBucket(getIp(request)))).slice(0, 24);
+}
+
 export function assertSameOrigin(request) {
   const m = request.method;
   if (m === 'GET' || m === 'HEAD' || m === 'OPTIONS') return;
