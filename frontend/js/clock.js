@@ -43,12 +43,52 @@
 
   const GLYPHS = '0123456789#@%&?/<>';
   const pad = (n, w = 2) => String(n).padStart(w, '0');
+
+  // ── fixed GMT offsets (what the dashboard picker offers) ──
+  const OFFSETS = [
+    '-12:00', '-11:00', '-10:00', '-09:30', '-09:00', '-08:00', '-07:00', '-06:00', '-05:00', '-04:00',
+    '-03:30', '-03:00', '-02:00', '-01:00', '+00:00', '+01:00', '+02:00', '+03:00', '+03:30', '+04:00',
+    '+04:30', '+05:00', '+05:30', '+05:45', '+06:00', '+06:30', '+07:00', '+08:00', '+08:45', '+09:00',
+    '+09:30', '+10:00', '+10:30', '+11:00', '+12:00', '+12:45', '+13:00', '+14:00',
+  ];
+  const OFFSET_RE = /^([+-])(\d{2}):(\d{2})$/;
+
+  // "+05:30" -> 330, anything else (or out of range) -> null
+  function fixedMinutes(zone) {
+    const m = OFFSET_RE.exec(zone);
+    if (!m || +m[3] > 59) return null;
+    const mins = (m[1] === '-' ? -1 : 1) * (+m[2] * 60 + +m[3]);
+    return mins >= -720 && mins <= 840 ? mins : null;
+  }
+
+  const label = (zone) => (fixedMinutes(zone) === null ? zone : 'GMT' + zone);
+
+  function fmtOffset(mins) {
+    if (mins === 0) return 'GMT';
+    const a = Math.abs(mins);
+    return 'GMT ' + (mins < 0 ? '-' : '+') + Math.floor(a / 60) + (a % 60 ? ':' + pad(a % 60) : '');
+  }
+
+  // any zone (old IANA name or offset) -> nearest entry in OFFSETS
+  function toOffset(zone, now = new Date()) {
+    if (fixedMinutes(zone) !== null) return zone;
+    let mins = 0;
+    try {
+      const raw = (new Intl.DateTimeFormat('en', { timeZone: validZone(zone), timeZoneName: 'shortOffset' })
+        .formatToParts(now).find((x) => x.type === 'timeZoneName') || {}).value || '';
+      const m = /GMT([+-])(\d{1,2})(?::(\d{2}))?/.exec(raw);
+      if (m) mins = (m[1] === '-' ? -1 : 1) * (+m[2] * 60 + +(m[3] || 0));
+    } catch {}
+    return OFFSETS.reduce((best, o) => (Math.abs(fixedMinutes(o) - mins) < Math.abs(fixedMinutes(best) - mins) ? o : best));
+  }
+
   const partFormatters = new Map();
   const offsetFormatters = new Map();
   const reducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   function validZone(zone) {
     if (typeof zone !== 'string' || !zone) return 'UTC';
+    if (fixedMinutes(zone) !== null) return zone;
     try {
       new Intl.DateTimeFormat('en', { timeZone: zone });
       return zone;
@@ -59,6 +99,7 @@
 
   function modern(zone) {
     const name = validZone(zone);
+    if (fixedMinutes(name) !== null) return name;
     const m = MODERN_NAMES[name] || name;
     return validZone(m) === m ? m : name;
   }
@@ -71,20 +112,25 @@
   }
 
   function parts(now, zone, hour12) {
-    const key = zone + '|' + hour12;
+    const fixed = fixedMinutes(zone);
+    const tz = fixed === null ? zone : 'UTC';
+    const date = fixed === null ? now : new Date(now.getTime() + fixed * 60000);
+    const key = tz + '|' + hour12;
     let f = partFormatters.get(key);
     if (!f) {
       f = new Intl.DateTimeFormat('en-GB', {
-        timeZone: zone, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: hour12 ? 'h12' : 'h23',
+        timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: hour12 ? 'h12' : 'h23',
       });
       partFormatters.set(key, f);
     }
     const out = {};
-    for (const p of f.formatToParts(now)) out[p.type] = p.value;
+    for (const p of f.formatToParts(date)) out[p.type] = p.value;
     return out;
   }
 
   function offset(zone, now = new Date()) {
+    const fixed = fixedMinutes(zone);
+    if (fixed !== null) return fmtOffset(fixed);
     try {
       let f = offsetFormatters.get(zone);
       if (!f) {
@@ -174,8 +220,8 @@
     set(document.querySelector('.nav-time-mini'), f.mini);
     const box = document.querySelector('.clock-display');
     if (!box) return f;
-    const label = f.clickable ? f.aria + ', click to change the format' : f.aria;
-    if (box.getAttribute('aria-label') !== label) box.setAttribute('aria-label', label);
+    const ariaLabel = f.clickable ? f.aria + ', click to change the format' : f.aria;
+    if (box.getAttribute('aria-label') !== ariaLabel) box.setAttribute('aria-label', ariaLabel);
     if (f.clickable) {
       box.setAttribute('role', 'button');
       box.setAttribute('tabindex', '0');
@@ -223,5 +269,5 @@
     tick();
   }
 
-  window.NovaClock = { FUN, FORMATS, frame, start, stop, zones, offset, validZone, modern };
+  window.NovaClock = { FUN, FORMATS, OFFSETS, frame, start, stop, zones, offset, label, toOffset, validZone, modern };
 })();
